@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const indianStates = [
+const indiancustomer_states = [
   { code: "01", name: "Jammu & Kashmir" },
   { code: "02", name: "Himachal Pradesh" },
   { code: "03", name: "Punjab" },
@@ -38,10 +38,10 @@ const indianStates = [
 const businessInfo = {
   name: "GLS TECHNOLOGIST",
   address: "Plot No. PAP-A-78, TTC Industrial Area, Pawane MIDC, Turbhe, Navi Mumbai,Maharashtra - 400709",
-  state_code: "27",
-  email: "glstechnologist2020@gmail.com",
+  customer_state_code: "27",
+  customer_email: "glstechnologist2020@gmail.com",
   gst: "27AAUFG7297B1ZV",
-  phone: "+91 98765 43210",
+  customer_phone: "+91 98765 43210",
   bank: "ICICI BANK",
   branch: "Airoli, Navi Mumbai",
   account: "109005002301",
@@ -69,14 +69,14 @@ const numberToWords = (num) => {
 
 const getFieldRules = (customerType) => ({
   company_name: true,
-  phone: true,
-  address_line1: true,
-  city: true,
-  state: true,
-  pincode: true,
-  gstin: customerType === "B2B",
-  pan: customerType === "B2C",
-  email: customerType === "B2B",
+  customer_phone: true,
+  customer_address_line1: true,
+  customer_city: true,
+  customer_state: true,
+  customer_pincode: true,
+  customer_gstin: customerType === "B2B",
+  customer_pan: customerType === "B2C",
+  customer_email: customerType === "B2B",
 });
 
 const Field = ({ label, required, children, className = "", hint }) => (
@@ -175,8 +175,8 @@ const OtpInput = ({ value, onChange, length, numbersOnly = false }) => (
 );
 
 const emptyAddress = {
-  company_name: "", gstin: "", pan: "", address_line1: "", address_line2: "",
-  city: "", state: "", state_code: "", pincode: "", email: "", phone: "",
+  company_name: "", customer_gstin: "", customer_pan: "", customer_address_line1: "", customer_address_line2: "",
+  customer_city: "", customer_state: "", customer_state_code: "", customer_pincode: "", customer_email: "", customer_phone: "",
   place_of_supply: "", place_of_supply_code: "",
 };
 
@@ -189,42 +189,42 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
       <Field label={customerType === "B2B" ? "Company / Name" : "Customer Name"} required={fieldRules.company_name}>
         <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)} placeholder={customerType === "B2B" ? "Company Name" : "Full Name"} />
       </Field>
-      <Field label="Email" required={fieldRules.email} hint={!fieldRules.email ? "optional" : undefined}>
-        <TextInput type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="billing@company.com" />
+      <Field label="Email" required={fieldRules.customer_email} hint={!fieldRules.customer_email ? "optional" : undefined}>
+        <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="billing@company.com" />
       </Field>
-      <Field label="Mobile Number" required={fieldRules.phone}>
-        <OtpInput value={form.phone || ""} onChange={(v) => update("phone", v)} length={10} numbersOnly />
+      <Field label="Mobile Number" required={fieldRules.customer_phone}>
+        <OtpInput value={form.customer_phone || ""} onChange={(v) => update("customer_phone", v)} length={10} numbersOnly />
       </Field>
       {customerType === "B2B" ? (
-        <Field label="GSTIN" required={fieldRules.gstin}>
-          <OtpInput value={form.gstin || ""} onChange={(v) => update("gstin", v)} length={15} />
+        <Field label="GSTIN" required={fieldRules.customer_gstin}>
+          <OtpInput value={form.customer_gstin || ""} onChange={(v) => update("customer_gstin", v)} length={15} />
         </Field>
       ) : (
         <Field label="GSTIN" >
-          <OtpInput value={form.gstin || ""} onChange={(v) => update("gstin", v)} length={15} />
+          <OtpInput value={form.customer_gstin || ""} onChange={(v) => update("customer_gstin", v)} length={15} />
         </Field>
       )}
-      <Field label="PAN" required={fieldRules.pan} hint={customerType === "B2B" ? "optional" : "required if sale > ₹2L"}>
-        <OtpInput value={form.pan || ""} onChange={(v) => update("pan", v)} length={10} />
+      <Field label="PAN" required={fieldRules.customer_pan} hint={customerType === "B2B" ? "optional" : "required if sale > ₹2L"}>
+        <OtpInput value={form.customer_pan || ""} onChange={(v) => update("customer_pan", v)} length={10} />
       </Field>
       <div />
-      <Field label="Address Line 1" required={fieldRules.address_line1}>
-        <TextInput value={form.address_line1} onChange={(e) => update("address_line1", e.target.value)} placeholder="Building, Street, Area" />
+      <Field label="Address Line 1" required={fieldRules.customer_address_line1}>
+        <TextInput value={form.customer_address_line1} onChange={(e) => update("customer_address_line1", e.target.value)} placeholder="Building, Street, Area" />
       </Field>
       <Field label="Address Line 2" hint="optional">
-        <TextInput value={form.address_line2} onChange={(e) => update("address_line2", e.target.value)} placeholder="Landmark (optional)" />
+        <TextInput value={form.customer_address_line2} onChange={(e) => update("customer_address_line2", e.target.value)} placeholder="Landmark (optional)" />
       </Field>
-      <Field label="City" required={fieldRules.city}>
-        <TextInput value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="Mumbai" />
+      <Field label="City" required={fieldRules.customer_city}>
+        <TextInput value={form.customer_city} onChange={(e) => update("customer_city", e.target.value)} placeholder="Mumbai" />
       </Field>
-      <Field label="State" required={fieldRules.state}>
-        <SelectInput value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="Select State" options={indianStates.map((s) => ({ value: s.name, label: s.name }))} />
+      <Field label="State" required={fieldRules.customer_state}>
+        <SelectInput value={form.customer_state} onChange={(e) => update("customer_state", e.target.value)} placeholder="Select customer_state" options={indiancustomer_states.map((s) => ({ value: s.name, label: s.name }))} />
       </Field>
       <Field label="State Code">
-        <TextInput value={form.state_code} onChange={(e) => update("state_code", e.target.value)} placeholder="27" readOnly={!!form.state} />
+        <TextInput value={form.customer_state_code} onChange={(e) => update("customer_state_code", e.target.value)} placeholder="27" readOnly={!!form.customer_state} />
       </Field>
-      <Field label="Pincode" required={fieldRules.pincode}>
-        <TextInput value={form.pincode} onChange={(e) => update("pincode", e.target.value)} placeholder="400001" />
+      <Field label="Pincode" required={fieldRules.customer_pincode}>
+        <TextInput value={form.customer_pincode} onChange={(e) => update("customer_pincode", e.target.value)} placeholder="400001" />
       </Field>
       <div />
     </div>
@@ -232,36 +232,53 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
 );
 
 export default function CreateInvoice() {
-  const [invoiceNo, setInvoiceNo] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
-  const [supplyType, setSupplyType] = useState("1");
-  const [revCharge, setRevCharge] = useState("no");
-  const [paymentTerms, setPaymentTerms] = useState("Tax Invoice");
+  const [customers, setCustomers] =useState([]);
+  const [invoiceNo, setInvoiceNo] =useState("");
+  const [invoiceDate, setInvoiceDate] =useState(new Date().toISOString().split("T")[0]);
+  const [supplyType, setSupplyType] =useState("Outward");
+  const [revCharge, setRevCharge] =useState("no");
+  const [paymentTerms, setPaymentTerms] =useState("Tax Invoice");
 
   // Customer type — auto-derived from GSTIN
-  const [customerType, setCustomerType] = useState("B2C");
+  const [customerType, setCustomerType] =useState("B2C");
   const fieldRules = getFieldRules(customerType);
 
-  const [ewayEnabled, setEwayEnabled] = useState(false);
-  const [docType, setDocType] = useState("");
-  const [subSupplyType, setSubSupplyType] = useState("1");
-  const [transporterName, setTransporterName] = useState("");
-  const [transporterDocNo, setTransporterDocNo] = useState("");
-  const [vehicleNo, setVehicleNo] = useState("");
-  const [from, setFrom] = useState("");
-  const [deliveryMode, setDeliveryMode] = useState("1");
-  const [approximateDistance, setApproximateDistance] = useState("");
+  const [ewayEnabled, setEwayEnabled] =useState(false);
+  const [docType, setDocType] =useState("");
+  const [subSupplyType, setSubSupplyType] =useState("Supply");
+  const [transporterName, setTransporterName] =useState("");
+  const [transporterDocNo, setTransporterDocNo] =useState("");
+  const [vehicleNo, setVehicleNo] =useState("");
+  const [from, setFrom] =useState("");
+  const [deliveryMode, setDeliveryMode] =useState("1");
+  const [approximateDistance, setApproximateDistance] =useState("");
 
-  const [customers] = useState([
-    { id: 1, company_name: "ABC Industries Pvt Ltd", gstin: "27ABCDE1234F1Z5", address_line1: "101 Industrial Zone", address_line2: "", city: "Mumbai", state: "Maharashtra", state_code: "27", pincode: "400001", email: "abc@example.com", phone: "9876543210", pan: "ABCDE1234F", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
-    { id: 2, company_name: "XYZ Traders", gstin: "27PQRSX5678L1Z2", address_line1: "45 Trade Center", address_line2: "Sector 5", city: "Pune", state: "Maharashtra", state_code: "27", pincode: "411001", email: "xyz@traders.com", phone: "9123456789", pan: "", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
-  ]);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showCustDropdown, setShowCustDropdown] = useState(false);
-  const [custSearch, setCustSearch] = useState("");
-  const [billForm, setBillForm] = useState({ ...emptyAddress });
-  const [shipForm, setShipForm] = useState({ ...emptyAddress });
-  const [sameAsBilling, setSameAsBilling] = useState(false);
+  // const [customers] =useState([
+  //   { id: 1, company_name: "ABC Industries Pvt Ltd", gstin: "27ABCDE1234F1Z5", customer_address_line1: "101 Industrial Zone", customer_address_line2: "", customer_city: "Mumbai", customer_state: "Maharashtra", customer_state_code: "27", customer_pincode: "400001", customer_email: "abc@example.com", customer_phone: "9876543210", customer_pan: "ABCDE1234F", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
+  //   { id: 2, company_name: "XYZ Traders", gstin: "27PQRSX5678L1Z2", customer_address_line1: "45 Trade Center", customer_address_line2: "Sector 5", customer_city: "Pune", customer_state: "Maharashtra", customer_state_code: "27", customer_pincode: "411001", customer_email: "xyz@traders.com", customer_phone: "9123456789", customer_pan: "", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
+  // ]);
+  const [selectedCustomer, setSelectedCustomer] =useState(null);
+  const [customerID, setCustomerID] =useState(null);
+  const [showCustDropdown, setShowCustDropdown] =useState(false);
+  const [custSearch, setCustSearch] =useState("");
+  const [billForm, setBillForm] =useState({ ...emptyAddress });
+  const [shipForm, setShipForm] =useState({ ...emptyAddress });
+  const [sameAsBilling, setSameAsBilling] =useState(false);
+
+   useEffect(() => {
+      loadCustomers();
+    }, []);
+  
+    const loadCustomers = async () => {
+      const res = await window.electronAPI.getCustomers();
+      console.log(res);
+  
+      if (res.success) {
+        setCustomers(res.data);
+      } else {
+        console.error(res.error);
+      }
+    };
 
   const filteredCusts = customers.filter((c) =>
     c.company_name.toLowerCase().includes(custSearch.toLowerCase())
@@ -301,6 +318,7 @@ export default function CreateInvoice() {
       vehicleNo,
       deliveryMode,
       from,
+      customerID,
     };
 
     console.log("📤 Sending to backend:", data);
@@ -325,33 +343,34 @@ export default function CreateInvoice() {
   const selectCustomer = (c) => {
     setSelectedCustomer(c);
     setBillForm({ ...c });
-    setCustomerType(c.gstin && c.gstin.trim().length === 15 ? "B2B" : "B2C");
+    setCustomerType(c.customer_gstin && c.customer_gstin.trim().length === 15 ? "B2B" : "B2C");
+    setCustomerID(c.id);
     if (sameAsBilling) setShipForm({ ...c });
     setShowCustDropdown(false);
   };
 
   const updateBillForm = (field, val) => {
-    if (field === "state") {
-      const st = indianStates.find((s) => s.name === val);
-      setBillForm((f) => ({ ...f, state: val, state_code: st ? st.code : f.state_code }));
-      if (sameAsBilling) setShipForm((f) => ({ ...f, state: val, state_code: st ? st.code : f.state_code }));
+    if (field === "customer_state") {
+      const st = indiancustomer_states.find((s) => s.name === val);
+      setBillForm((f) => ({ ...f, customer_state: val, customer_state_code: st ? st.code : f.customer_state_code }));
+      if (sameAsBilling) setShipForm((f) => ({ ...f, customer_state: val, customer_state_code: st ? st.code : f.customer_state_code }));
     } else if (field === "place_of_supply") {
-      const st = indianStates.find((s) => s.name === val);
+      const st = indiancustomer_states.find((s) => s.name === val);
       setBillForm((f) => ({ ...f, place_of_supply: val, place_of_supply_code: st ? st.code : f.place_of_supply_code }));
       if (sameAsBilling) setShipForm((f) => ({ ...f, place_of_supply: val, place_of_supply_code: st ? st.code : f.place_of_supply_code }));
     } else {
-      if (field === "gstin") setCustomerType(val.trim().length === 15 ? "B2B" : "B2C");
+      if (field === "customer_gstin") setCustomerType(val.trim().length === 15 ? "B2B" : "B2C");
       setBillForm((f) => ({ ...f, [field]: val }));
       if (sameAsBilling) setShipForm((f) => ({ ...f, [field]: val }));
     }
   };
 
   const updateShipForm = (field, val) => {
-    if (field === "state") {
-      const st = indianStates.find((s) => s.name === val);
-      setShipForm((f) => ({ ...f, state: val, state_code: st ? st.code : f.state_code }));
+    if (field === "customer_state") {
+      const st = indiancustomer_states.find((s) => s.name === val);
+      setShipForm((f) => ({ ...f, customer_state: val, customer_state_code: st ? st.code : f.customer_state_code }));
     } else if (field === "place_of_supply") {
-      const st = indianStates.find((s) => s.name === val);
+      const st = indiancustomer_states.find((s) => s.name === val);
       setShipForm((f) => ({ ...f, place_of_supply: val, place_of_supply_code: st ? st.code : f.place_of_supply_code }));
     } else {
       setShipForm((f) => ({ ...f, [field]: val }));
@@ -363,7 +382,7 @@ export default function CreateInvoice() {
     if (checked) setShipForm({ ...billForm });
   };
 
-  const [items, setItems] = useState([
+  const [items, setItems] =useState([
     { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 },
   ]);
   const updateItem = (i, f, v) => { const u = [...items]; u[i][f] = v; setItems(u); };
@@ -378,9 +397,9 @@ export default function CreateInvoice() {
   const totalDiscount = items.reduce((s, item) => s + (item.qty * item.rate * item.discount) / 100, 0);
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount;
-  const BUSINESS_STATE_CODE = businessInfo.state_code;
-  const placeOfSupplyCode = sameAsBilling ? billForm.state_code : shipForm.state_code;
-  const isInter = placeOfSupplyCode !== BUSINESS_STATE_CODE;
+  const BUSINESS_customer_state_CODE = businessInfo.customer_state_code;
+  const placeOfSupplyCode = sameAsBilling ? billForm.customer_state_code : shipForm.customer_state_code;
+  const isInter = placeOfSupplyCode === BUSINESS_customer_state_CODE;
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
@@ -417,8 +436,8 @@ export default function CreateInvoice() {
           <div>
             <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{businessInfo.name}</div>
             <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{businessInfo.address},</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>State Code : {businessInfo.state_code}</div>
-            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{businessInfo.email} · {businessInfo.phone}</div>
+            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer_state Code : {businessInfo.customer_state_code}</div>
+            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{businessInfo.customer_email} · {businessInfo.customer_phone}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px", letterSpacing: "0.05em" }}>GSTIN</div>
@@ -440,10 +459,10 @@ export default function CreateInvoice() {
             <SelectInput value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="Select Type" options={InvoiceTypeOptions.map((p) => ({ value: p, label: p }))} />
           </Field>
           <Field label="Supply Type" required>
-            <SelectInput value={supplyType} onChange={(e) => setSupplyType(e.target.value)} placeholder="Select" options={[{ value: "1", label: "Outward" }, { value: "2", label: "Inward" }]} />
+            <SelectInput value={supplyType} onChange={(e) => setSupplyType(e.target.value)} placeholder="Select" options={[{ value: "Outward", label: "Outward" }, { value: "Inward", label: "Inward" }]} />
           </Field>
           <Field label="Sub Supply Type" required>
-            <SelectInput value={subSupplyType} onChange={(e) => setSubSupplyType(e.target.value)} placeholder="Select Type" options={[{ value: "1", label: "Supply" }, { value: "2", label: "Import" }, { value: "3", label: "Export" }, { value: "4", label: "Job Work" }, { value: "5", label: "For Own Use" }, { value: "6", label: "Job Work Returns" }, { value: "7", label: "Sales Return" }, { value: "8", label: "Others" }]} />
+            <SelectInput value={subSupplyType} onChange={(e) => setSubSupplyType(e.target.value)} placeholder="Select Type" options={[{ value: "Supply", label: "Supply" }, { value: "Import", label: "Import" }, { value: "Export", label: "Export" }, { value: "Job", label: "Job Work" }, { value: "For Own Use", label: "For Own Use" }, { value: "Job Work Returns", label: "Job Work Returns" }, { value: "Sales Return", label: "Sales Return" }, { value: "Others", label: "Others" }]} />
           </Field>
           <Field label="Reverse Charge">
             <SelectInput value={revCharge} onChange={(e) => setRevCharge(e.target.value)} options={[{ value: "no", label: "No" }, { value: "yes", label: "Yes" }]} />
@@ -482,7 +501,7 @@ export default function CreateInvoice() {
                           onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
                         >
                           <div style={{ fontWeight: 600, color: "#111827" }}>{c.company_name}</div>
-                          <div style={{ fontSize: "11px", color: "#6b7280" }}>{c.gstin}</div>
+                          <div style={{ fontSize: "11px", color: "#6b7280" }}>{c.customer_gstin}</div>
                         </div>
                       ))}
                     </div>
@@ -531,22 +550,22 @@ export default function CreateInvoice() {
                   <TextInput value={shipForm.company_name} onChange={(e) => updateShipForm("company_name", e.target.value)} placeholder="Company Name" />
                 </Field>
                 <Field label="Address Line 1">
-                  <TextInput value={shipForm.address_line1} onChange={(e) => updateShipForm("address_line1", e.target.value)} placeholder="Building, Street" />
+                  <TextInput value={shipForm.customer_address_line1} onChange={(e) => updateShipForm("customer_address_line1", e.target.value)} placeholder="Building, Street" />
                 </Field>
                 <Field label="Address Line 2">
-                  <TextInput value={shipForm.address_line2} onChange={(e) => updateShipForm("address_line2", e.target.value)} placeholder="Landmark" />
+                  <TextInput value={shipForm.customer_address_line2} onChange={(e) => updateShipForm("customer_address_line2", e.target.value)} placeholder="Landmark" />
                 </Field>
                 <Field label="City">
-                  <TextInput value={shipForm.city} onChange={(e) => updateShipForm("city", e.target.value)} placeholder="Mumbai" />
+                  <TextInput value={shipForm.customer_city} onChange={(e) => updateShipForm("customer_city", e.target.value)} placeholder="Mumbai" />
                 </Field>
-                <Field label="State">
-                  <SelectInput value={shipForm.state} onChange={(e) => updateShipForm("state", e.target.value)} placeholder="Select State" options={indianStates.map((s) => ({ value: s.name, label: s.name }))} />
+                <Field label="customer_state">
+                  <SelectInput value={shipForm.customer_state} onChange={(e) => updateShipForm("customer_state", e.target.value)} placeholder="Select customer_state" options={indiancustomer_states.map((s) => ({ value: s.name, label: s.name }))} />
                 </Field>
-                <Field label="State Code">
-                  <TextInput value={shipForm.state_code} onChange={(e) => updateShipForm("state_code", e.target.value)} placeholder="27" readOnly={!!shipForm.state} />
+                <Field label="customer_state Code">
+                  <TextInput value={shipForm.customer_state_code} onChange={(e) => updateShipForm("customer_state_code", e.target.value)} placeholder="27" readOnly={!!shipForm.customer_state} />
                 </Field>
-                <Field label="Pincode">
-                  <TextInput value={shipForm.pincode} onChange={(e) => updateShipForm("pincode", e.target.value)} placeholder="400001" />
+                <Field label="customer_pincode">
+                  <TextInput value={shipForm.customer_pincode} onChange={(e) => updateShipForm("customer_pincode", e.target.value)} placeholder="400001" />
                 </Field>
                 <div />
               </div>
@@ -618,7 +637,7 @@ export default function CreateInvoice() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "#f8fafc" }}>
-                {["#", "Description", "HSN/SAC", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
+                {["#", "Description", "HSN/SAC", "Code", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
                   <th key={h} style={{ padding: "10px 10px", textAlign: ["Taxable (₹)", "Tax (₹)", "Total (₹)", "Rate (₹)"].includes(h) ? "right" : "left", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>

@@ -1,68 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiPrinter, FiShare2, FiArrowLeft, FiFileText, FiDownload } from "react-icons/fi";
 import Logo from "../../assets/logo.svg";
 
-// ─── Mock Data ─────────────────────────────────────────────────────────────
-const mockInvoices = [
-  {
-    id: 1,
-    invoiceNo: "INV-1004",
-    invoiceDate: "2025-09-15",
-    invoiceType: "Tax Invoice",
-    poNumber: "PO-88421",
-    deliveryMode: "By Road",
-    supplyType: "Outward",
-    subSupplyType: "Supply",
-    revCharge: "No",
-    paymentTerms: "30 Days",
-    dueDate: "2025-10-15",
-    status: "Unpaid",
-    // ── E-Way Bill fields ──
-    ewayBill: {
-      ewayBillNo: "EWB1234567890",
-      ewayBillDate: "2025-09-15",
-      ewayValidUpto: "2025-09-18",
-      transportMode: "Road",
-      vehicleNo: "MH12AB1234",
-      transporterName: "Blue Dart Logistics",
-    },
-    customer: {
-      company_name: "AlphaWorks Ltd",
-      gstin: "27AALCA1234F1ZV",
-      pan: "AALCA1234F",
-      phone: "9876543210",
-      email: "accounts@alphaworks.com",
-      address_line1: "101 Industrial Zone, MIDC",
-      address_line2: "Andheri East",
-      city: "Mumbai",
-      state: "Maharashtra",
-      state_code: "27",
-      pincode: "400093",
-      place_of_supply: "Maharashtra",
-      place_of_supply_code: "27",
-    },
-    shipping: {
-      company_name: "AlphaWorks Ltd",
-      address_line1: "101 Industrial Zone, MIDC",
-      address_line2: "Andheri East",
-      city: "Mumbai",
-      state: "Maharashtra",
-      state_code: "27",
-      pincode: "400093",
-      place_of_supply: "Maharashtra",
-      place_of_supply_code: "27",
-    },
-    items: [
-      { description: "Control Panel Wiring", itemCode: "CPW-001", hsn: "85371000", unit: "NOS", qty: 2, rate: 850, discount: 0, gstRate: 18 },
-      { description: "PLC Programming & Configuration", itemCode: "PLC-002", hsn: "85340000", unit: "SET", qty: 1, rate: 4500, discount: 5, gstRate: 18 },
-      { description: "Cable Tray Installation", itemCode: "CTI-003", hsn: "73089000", unit: "MTR", qty: 20, rate: 85, discount: 0, gstRate: 18 },
-      
-    ],
-    pfCharge: 350,
-    termsAndConditions: "1. Payment due within 30 days of invoice date.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction.",
-  },
-];
+
 
 const businessInfo = {
   name: "GLS TECHNOLOGIST",
@@ -97,24 +38,39 @@ const indianStates = [
   { code: "36", name: "Telangana" }, { code: "37", name: "Andhra Pradesh" },
 ];
 
-const gstOptions = [0, 5, 12, 18, 28];
+
 const InvoiceTypeOptions = ["Tax Invoice", "Debit Note", "Credit Note"];
 const units = ["NOS", "PCS", "KG", "MTR", "LTR", "SET", "BOX", "ROLL", "PAIR"];
 
 const numberToWords = (num) => {
-  if (num === 0) return "Zero";
+  if (!num || isNaN(num)) return "Zero";
+
+  num = Math.floor(num);
+
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+    "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
   const convert = (n) => {
+    if (n === 0) return "";
     if (n < 20) return ones[n];
     if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
     if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + convert(n % 100) : "");
     if (n < 100000) return convert(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + convert(n % 1000) : "");
     if (n < 10000000) return convert(Math.floor(n / 100000)) + " Lakh" + (n % 100000 ? " " + convert(n % 100000) : "");
-    return convert(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 ? " " + convert(n % 10000000) : "");
+    
+    // ✅ HARD STOP to prevent infinite recursion
+    if (n >= 10000000) {
+      return convert(Math.floor(n / 10000000)) + " Crore" +
+        (n % 10000000 ? " " + convert(n % 10000000) : "");
+    }
+
+    return "";
   };
-  return convert(Math.round(num));
+
+  return convert(num).trim();
 };
 
 const formatDate = (d) => {
@@ -239,40 +195,51 @@ const AddressBlock = ({ form, update, title, grid3 }) => (    <div>
   );
 
 // ─── Edit Invoice Form ──────────────────────────────────────────────────────
-function EditInvoiceForm({ invoice, onSave, onCancel }) {
+function EditInvoiceForm({ invoice, customer, items, onSave, onCancel }) {
   const emptyAddress = {
     company_name: "", gstin: "", pan: "", address_line1: "", address_line2: "",
     city: "", state: "", state_code: "", pincode: "", email: "", phone: "",
     place_of_supply: "", place_of_supply_code: "",
   };
 
-  const [invoiceNo, setInvoiceNo] = useState(invoice.invoiceNo);
-  const [invoiceDate, setInvoiceDate] = useState(invoice.invoiceDate);
-  const [invoiceType, setInvoiceType] = useState(invoice.invoiceType || "Tax Invoice");
-  const [supplyType, setSupplyType] = useState(invoice.supplyType === "interstate" ? "interstate" : "intrastate");
-  const [subSupplyType, setSubSupplyType] = useState(invoice.subSupplyType || "");
-  const [revCharge, setRevCharge] = useState(invoice.revCharge?.toLowerCase() === "yes" ? "yes" : "no");
+  const billAddress = {
+    company_name: invoice.bill_company_name, gstin: invoice.bill_gstin, pan: invoice.bill_pan, address_line1: invoice.bill_address_line1, address_line2:  invoice.bill_address_line2,
+    city:  invoice.bill_city, state:  invoice.bill_state, state_code:  invoice.bill_state_code, pincode:  invoice.bill_pincode, email:  invoice.bill_email, phone:  invoice.bill_phone,
+   
+  };
 
-  const [ewayEnabled, setEwayEnabled] = useState(!!(invoice.ewayBill?.ewayBillNo));
-  const [docType, setDocType] = useState(invoice.ewayBill?.docType || "INV");
-  const [approximateDistance, setApproximateDistance] = useState(invoice.ewayBill?.approximateDistance || "");
-  const [transporterName, setTransporterName] = useState(invoice.ewayBill?.transporterName || "");
-  const [transporterDocNo, setTransporterDocNo] = useState(invoice.ewayBill?.transporterDocNo || "");
-  const [vehicleNo, setVehicleNo] = useState(invoice.ewayBill?.vehicleNo || "");
-  const [from, setFrom] = useState(invoice.ewayBill?.from || "");
-  const [deliveryMode, setDeliveryMode] = useState(invoice.ewayBill?.deliveryMode || "1");
+  const shipAddress = {
+    company_name: invoice.ship_company_name, gstin: invoice.ship_gstin, pan: invoice.ship_pan, address_line1: invoice.ship_address_line1, address_line2:  invoice.ship_address_line2,
+    city:  invoice.ship_city, state:  invoice.ship_state, state_code:  invoice.ship_state_code, pincode:  invoice.ship_pincode, 
+   
+  };
 
-  const [billForm, setBillForm] = useState({ ...emptyAddress, ...invoice.customer });
-  const isSameAddress =
-    invoice.customer.address_line1 === invoice.shipping?.address_line1 &&
-    invoice.customer.city === invoice.shipping?.city &&
-    invoice.customer.pincode === invoice.shipping?.pincode;
-  const [sameAsBilling, setSameAsBilling] = useState(isSameAddress);
-  const [shipForm, setShipForm] = useState({ ...emptyAddress, ...invoice.shipping });
+  const gstOptions = [0, 5, 12, 18, 28];
 
-  const [items, setItems] = useState(invoice.items.map((item) => ({ ...item })));
+  const [invoiceNo, setInvoiceNo] = useState(invoice.invoice_no);
+  const [itemsState, setItems] = useState(items || []);
+  const [invoiceDate, setInvoiceDate] = useState(invoice.invoice_date);
+  const [invoiceType, setInvoiceType] = useState(invoice.invoice_type || "Tax Invoice");
+  const [supplyType, setSupplyType] = useState(invoice.supply_type);
+  const [subSupplyType, setSubSupplyType] = useState(invoice.sub_supply_type || "");
+  const [revCharge, setRevCharge] = useState(invoice.reverse_charge?.toLowerCase() === "yes" ? "yes" : "no");
+
+  const [ewayEnabled, setEwayEnabled] = useState(!!(invoice.eway_enable));
+  const [docType, setDocType] = useState(invoice.doc_type || "INV");
+  const [approximateDistance, setApproximateDistance] = useState(invoice.distance || "");
+  const [transporterName, setTransporterName] = useState(invoice.transporter_name || "");
+  const [transporterDocNo, setTransporterDocNo] = useState(invoice.transporter_doc|| "");
+  const [vehicleNo, setVehicleNo] = useState(invoice.vehicle_no || "");
+  const [from, setFrom] = useState(invoice.from || "");
+  const [deliveryMode, setDeliveryMode] = useState(invoice.delivery_mode || "1");
+
+  const [billForm, setBillForm] = useState({ ...emptyAddress, ...billAddress });
+  
+  const [sameAsBilling, setSameAsBilling] = useState(invoice.same_as_billing);
+  const [shipForm, setShipForm] = useState({ ...emptyAddress, ...shipAddress});
+
   const [pfCharge, setPfCharge] = useState(invoice.pfCharge || 0);
-  const [termsAndConditions, setTermsAndConditions] = useState(invoice.termsAndConditions || "");
+  const [termsAndConditions, setTermsAndConditions] = useState( "");
 
   const updateBillForm = (field, val) => {
     if (field === "state") {
@@ -299,12 +266,18 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
     if (checked) setShipForm({ ...billForm });
   };
 
-  const updateItem = (i, f, v) => { const u = [...items]; u[i][f] = v; setItems(u); };
-  const addItem = () => setItems([...items, { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 }]);
+  const updateItem = (index, field, value) => {
+  setItems((prev) => {
+    const updated = [...prev];
+    updated[index] = { ...updated[index], [field]: value };
+    return updated;
+  });
+};
+  const addItem = () => setItems([...items, { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gst_rate: 18 }]);
   const removeItem = (i) => items.length > 1 && setItems(items.filter((_, idx) => idx !== i));
 
   const itemTaxable = (item) => { const g = item.qty * item.rate; return g - (g * (item.discount || 0)) / 100; };
-  const itemTax = (item) => (itemTaxable(item) * item.gstRate) / 100;
+  const itemTax = (item) => (itemTaxable(item) * item.gst_rate) / 100;
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
 
   const subtotal = items.reduce((s, item) => s + item.qty * item.rate, 0);
@@ -322,7 +295,7 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
 
   const taxSummary = items.reduce((acc, item) => {
     const key = item.hsn || "N/A";
-    if (!acc[key]) acc[key] = { hsn: key, taxable: 0, cgstAmt: 0, sgstAmt: 0, igstAmt: 0, rate: item.gstRate };
+    if (!acc[key]) acc[key] = { hsn: key, taxable: 0, cgstAmt: 0, sgstAmt: 0, igstAmt: 0, rate: item.gst_rate };
     acc[key].taxable += itemTaxable(item);
     const tax = itemTax(item);
     if (isInter) acc[key].igstAmt += tax;
@@ -330,16 +303,80 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
     return acc;
   }, {});
 
-  const handleSave = () => {
-    onSave({
-      ...invoice,
-      invoiceNo, invoiceDate, invoiceType, supplyType, subSupplyType, revCharge,
-      customer: billForm,
-      shipping: sameAsBilling ? billForm : shipForm,
-      items, pfCharge, termsAndConditions,
-      ewayBill: ewayEnabled ? { ...invoice.ewayBill, docType, approximateDistance, transporterName, transporterDocNo, vehicleNo, from, deliveryMode } : null,
-    });
-  };
+  // const handleSave = () => {
+  //   onSave({
+  //     ...invoice,
+  //     invoiceNo, invoiceDate, invoiceType, supplyType, subSupplyType, revCharge,
+  //     customer: billForm,
+  //     shipping: sameAsBilling ? billForm : shipForm,
+  //     itemsState, pfCharge, termsAndConditions,
+  //     ewayBill: ewayEnabled ? { ...invoice.ewayBill, docType, approximateDistance, transporterName, transporterDocNo, vehicleNo, from, deliveryMode } : null,
+  //   });
+  // };
+
+    const handleSave = async () => {
+      try {
+        const data = {
+          invoiceNo,
+          invoiceDate,
+          invoiceType,
+          supplyType,
+          subSupplyType,
+          revCharge,
+
+          billForm,
+          shipForm,
+          sameAsBilling,
+
+          items,
+
+          subtotal,
+          totalDiscount,
+          taxableAmount,
+          cgst,
+          sgst,
+          igst,
+          roundOff,
+          grandTotal,
+
+          ewayEnabled,
+          docType,
+          approximateDistance,
+          transporterName,
+          transporterDocNo,
+          vehicleNo,
+          deliveryMode,
+          from,
+          invoice,
+        };
+
+        console.log("📤 Sending to backend:", data);
+
+        const res = await window.electronAPI.updateInvoice(data);
+
+        if (res?.success) {
+          alert(`✅ Invoice Saved (ID: ${res.invoiceId})`);
+          onSave({
+            ...invoice,
+            invoiceNo, invoiceDate, invoiceType, supplyType, subSupplyType, revCharge,
+            customer: billForm,
+            shipping: sameAsBilling ? billForm : shipForm,
+            itemsState, pfCharge, termsAndConditions,
+            ewayBill: ewayEnabled ? { ...invoice.ewayBill, docType, approximateDistance, transporterName, transporterDocNo, vehicleNo, from, deliveryMode } : null,
+          });
+          
+          // Optional: Reset form
+          // resetForm();
+        } else {
+          alert("❌ Failed to save invoice");
+        }
+
+      } catch (error) {
+        alert(error);
+      }
+    };
+
+  
 
   const grid3 = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" };
   const grid2 = { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" };
@@ -359,7 +396,7 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Edit Invoice</h1>
               <span style={{ padding: "4px 10px", background: "#fef3c7", border: "1.5px solid #fde68a", borderRadius: "20px", fontSize: "11.5px", fontWeight: 700, color: "#92400e" }}>
-                ✏️ Editing {invoice.invoiceNo}
+                ✏️ Editing {invoice.invoice_no}
               </span>
             </div>
             <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>Pre-filled with saved data · Make your changes below</p>
@@ -419,7 +456,7 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", paddingBottom: "8px", borderBottom: "1.5px solid #f0f4f8" }}>
               <div style={{ fontSize: "13px", fontWeight: 700, color: "#1e3a5f" }}>🚚 Shipping Address</div>
               <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", color: "#6b7280", fontWeight: 600 }}>
-                <input type="checkbox" checked={sameAsBilling} onChange={(e) => handleSameAsBilling(e.target.checked)} style={{ width: "14px", height: "14px", accentColor: "#1e3a5f", cursor: "pointer" }} />
+                <input type="checkbox"checked={sameAsBilling === 1} onChange={(e) => handleSameAsBilling(e.target.checked)} style={{ width: "14px", height: "14px", accentColor: "#1e3a5f", cursor: "pointer" }} />
                 Same as Billing
               </label>
             </div>
@@ -498,11 +535,11 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => (
+              {itemsState.map((item, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
                   <td style={{ padding: "8px 10px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
                   <td style={{ padding: "5px 6px", minWidth: "160px" }}><input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
-                  <td style={{ padding: "5px 6px", width: "100px" }}><input value={item.itemCode} onChange={(e) => updateItem(i, "itemCode", e.target.value)} placeholder="Code" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
+                  <td style={{ padding: "5px 6px", width: "100px" }}><input value={item.item_code} onChange={(e) => updateItem(i, "itemCode", e.target.value)} placeholder="Code" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
                   <td style={{ padding: "5px 6px", width: "100px" }}><input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} placeholder="HSN" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
                   <td style={{ padding: "5px 6px", width: "75px" }}>
                     <select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...editInputStyle, padding: "6px 7px", fontSize: "12px" }}>
@@ -514,9 +551,10 @@ function EditInvoiceForm({ invoice, onSave, onCancel }) {
                   <td style={{ padding: "5px 6px", width: "65px" }}><input type="number" value={item.discount} min={0} max={100} onChange={(e) => updateItem(i, "discount", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} /></td>
                   <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   <td style={{ padding: "5px 6px", width: "70px" }}>
-                    <select value={item.gstRate} onChange={(e) => updateItem(i, "gstRate", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 7px", fontSize: "12px" }}>
+                    <select value={Number(item.gst_rate)} onChange={(e) => updateItem(i, "gst_rate", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 7px", fontSize: "12px" }}>
                       {gstOptions.map((r) => <option key={r} value={r}>{r}%</option>)}
                     </select>
+                    
                   </td>
                   <td style={{ padding: "6px 10px", textAlign: "right", color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>₹ {itemTax(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "#1e3a5f", whiteSpace: "nowrap", fontSize: "12.5px" }}>₹ {itemTotal(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
@@ -633,10 +671,23 @@ export default function InvoiceDetail() {
 
   // ── Added: mode & invoice state for edit toggle ──
   const [mode, setMode] = useState("view");
-  const [invoice, setInvoice] = useState(
-    mockInvoices.find((inv) => inv.id === Number(id)) || mockInvoices[0]
-  );
+  const [invoice, setInvoice] = useState({});
+const [customer, setCustomer] = useState({});
+const [items, setItems] = useState([]);
   const [toast, setToast] = useState(false);
+
+    useEffect(() => {
+    if (id) {
+      const numericId = Number(id);
+      window.electronAPI.getInvoiceById(numericId).then((res) => {
+        if (res.success) {
+        setInvoice(res.data);        // full invoice object
+        setCustomer(res.data.customer); // customer
+        setItems(res.data.items);    // items array
+      }
+      });
+    }
+  }, [id]);
 
   const handleSave = (updated) => {
     setInvoice(updated);
@@ -645,45 +696,152 @@ export default function InvoiceDetail() {
     setTimeout(() => setToast(false), 3000);
   };
 
+  const handleDelivery = async () => {
+  try {
+
+      if (invoice?.challan === 1) {
+      navigate(`/delivery-challan/${id}`);
+      return;
+    }
+    const payload = {
+      invoice_id: id,
+      challanNo: `CHL-${Date.now()}`,
+      challanDate: new Date().toISOString().split("T")[0],
+      againstInvoiceNo: invoice.invoice_no,
+      transportMode: invoice.transport_mode,
+      vehicleNo: invoice.vehicle_no,
+      placeOfSupply: invoice.ship_state,
+      placeOfSupplyCode: invoice.ship_state_code,
+      termsAndConditions: "",
+    };
+
+    const res = await window.electronAPI.deliveryChallan(payload );
+
+    if (res.success) {
+      alert("✅ Delivery Challan Created");
+
+      // redirect to view page
+      navigate(`/delivery-challan/${res.id}`);
+    } else {
+      alert("❌ Failed to create challan");
+    }
+  } catch (error) {
+    alert("Something went wrong");
+  }
+};
+
+  const handleDownloadPDF = async () => {
+    const element = document.querySelector(".print-area");
+
+    if (!element) return;
+
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { margin:0; font-family: Arial; }
+              @page { size: A4; margin: 10mm; }
+            </style>
+          </head>
+          <body>
+            ${element.outerHTML}
+          </body>
+        </html>
+      `;
+
+    await window.electronAPI.generatePDF( {fileext: 'Invoice',
+      html: html,});
+    //  const res = await window.electronAPI.downloadPDF();
+  };
+
+  const handleShare = async () => {
+  try {
+     const element = document.querySelector(".print-area");
+
+    if (!element) return;
+
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { margin:0; font-family: Arial; }
+              @page { size: A4; margin: 10mm; }
+            </style>
+          </head>
+          <body>
+            ${element.outerHTML}
+          </body>
+        </html>
+      `;
+
+    const res = await window.electronAPI.generateAutoPDF( {fileext: 'Invoice',
+      html: html,});
+
+    if (res?.success) {
+      await window.electronAPI.sharePDF(res.filePath);
+    }
+  } catch (err) {
+    console.log( err);
+  }
+};
+
+ const handlePrint = async () => {
+    const element = document.querySelector(".print-area");
+
+      if (!element) return;
+
+        const html = `
+          <html>
+            <head>
+              <style>
+                body { margin:0; font-family: Arial; }
+                @page { size: A4; margin: 10mm; }
+              </style>
+            </head>
+            <body>
+              ${element.outerHTML}
+            </body>
+          </html>
+        `;
+
+      await window.electronAPI.printPDF(html);
+  };
+
+
+
   // ── Edit mode: render edit form ──
   if (mode === "edit") {
-    return <EditInvoiceForm invoice={invoice} onSave={handleSave} onCancel={() => setMode("view")} />;
+    return <EditInvoiceForm invoice={invoice} customer={customer} items={items} onSave={handleSave} onCancel={() => setMode("view")} />;
   }
 
   // ── View mode: 100% original code, zero changes ──
-  const { customer, shipping, items, pfCharge, supplyType, ewayBill } = invoice;
 
   const itemTaxable = (item) => {
     const gross = item.qty * item.rate;
     return gross - (gross * (item.discount || 0)) / 100;
   };
-  const itemTax = (item) => (itemTaxable(item) * item.gstRate) / 100;
+  const itemTax = (item) => (itemTaxable(item) * item.gst_rate) / 100;
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
   const itemDiscount = (item) => (item.qty * item.rate * (item.discount || 0)) / 100;
 
   const subtotal = items.reduce((s, item) => s + item.qty * item.rate, 0);
   const totalDiscount = items.reduce((s, item) => s + itemDiscount(item), 0);
   const taxableAmount = subtotal - totalDiscount;
-  const grandTaxable = taxableAmount + Number(pfCharge);
+  const grandTaxable = taxableAmount + Number(0);
 
-  const isInter = supplyType === "interstate";
+  const isInter = invoice.ship_state_code == businessInfo.state_code;
+  console.log(isInter);
+  console.log(invoice.ship_state_code);
+  console.log(businessInfo.state_code);
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
   const igst = isInter ? totalItemTax : 0;
   const grandBeforeRound = grandTaxable + cgst + sgst + igst;
-  const grandTotal = Math.round(grandBeforeRound);
+ const grandTotal = Math.round(grandBeforeRound || 0);
   const roundOff = grandTotal - grandBeforeRound;
 
-  const taxSummary = items.reduce((acc, item) => {
-    const key = item.hsn || "N/A";
-    if (!acc[key]) acc[key] = { hsn: key, taxable: 0, cgstAmt: 0, sgstAmt: 0, igstAmt: 0, rate: item.gstRate };
-    acc[key].taxable += itemTaxable(item);
-    const tax = itemTax(item);
-    if (isInter) acc[key].igstAmt += tax;
-    else { acc[key].cgstAmt += tax / 2; acc[key].sgstAmt += tax / 2; }
-    return acc;
-  }, {});
+ 
 
   const cell = (extra = {}) => ({ border: "1px solid #d1d5db", padding: "7px 10px", fontSize: "12px", ...extra });
 
@@ -718,25 +876,25 @@ export default function InvoiceDetail() {
               <FiArrowLeft size={15} /> Back
             </button>
             <div>
-              <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Invoice {invoice.invoiceNo}</h1>
-              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(invoice.invoiceDate)} · {customer.company_name}</p>
+              <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Invoice {invoice.invoice_no}</h1>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(invoice.invoice_date)} · {invoice.bill_company_name}</p>
             </div>
             <StatusBadge status={invoice.status} />
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button type="button" onClick={() => navigate(`/delivery-challan/`)}
+            <button type="button" onClick={handleDelivery}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #d1fae5", borderRadius: "8px", background: "#ecfdf5", fontSize: "13px", fontWeight: 700, color: "#065f46", cursor: "pointer" }}>
-              <FiFileText size={15} /> Create Challan
+              <FiFileText size={15} />  {invoice?.challan === 1 ? "View Challan" : "Create Challan"}
             </button>
-            <button type="button" 
+            <button type="button"  onClick={handleDownloadPDF}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e0e7ff", borderRadius: "8px", background: "#eef2ff", fontSize: "13px", fontWeight: 700, color: "#3730a3", cursor: "pointer" }}>
               <FiDownload size={15} /> Download PDF
             </button>
-            <button type="button" 
+            <button type="button" onClick={handlePrint}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "13px", fontWeight: 700, color: "#374151", cursor: "pointer" }}>
               <FiPrinter size={15} /> Print
             </button>
-            <button type="button" 
+            <button type="button" onClick={handleShare}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13px", fontWeight: 700, color: "#fff", cursor: "pointer" }}>
               <FiShare2 size={15} /> Share
             </button>
@@ -763,16 +921,16 @@ export default function InvoiceDetail() {
           <div style={{ background: "#fff", padding: "20px 28px", borderBottom: "3px solid #1e3a5f" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-<img
-  src={Logo}
-  alt="Logo"
-  style={{
-    width: "60px",
-    height: "auto",
-    maxHeight: "60px",
-    objectFit: "contain"
-  }}
-/>                <div>
+                  <img
+                    src={Logo}
+                    alt="Logo"
+                    style={{
+                      width: "60px",
+                      height: "auto",
+                      maxHeight: "60px",
+                      objectFit: "contain"
+                    }}
+                  />                <div>
                   <div style={{ fontSize: "20px", fontWeight: 900, color: "#1e3a5f", letterSpacing: "0.5px" }}>{businessInfo.name}</div>
                   <div style={{ fontSize: "11px", color: "#6b7280", maxWidth: "380px", lineHeight: "1.3", marginTop: "2px" }}>{businessInfo.address}</div>
                   <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "1px" }}>State Code: <strong>{businessInfo.state_code}</strong></div>
@@ -789,7 +947,7 @@ export default function InvoiceDetail() {
           {/* ── INVOICE TITLE BAR ── */}
           <div style={{ background: "#f8fafc", borderBottom: "1.5px solid #e5e7eb", padding: "9px 28px", textAlign: "center" }}>
             <span style={{ fontSize: "15px", fontWeight: 800, color: "#111827", letterSpacing: "1px", textTransform: "uppercase" }}>
-              {invoice.invoiceType || "Tax Invoice"}
+              {invoice.invoice_type || "Tax Invoice"}
             </span>
           </div>
 
@@ -824,16 +982,16 @@ export default function InvoiceDetail() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Shipping Address
               </div>
-              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{shipping.company_name}</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.ship_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {shipping.address_line1}
-                {shipping.address_line2 && <>, {shipping.address_line2}</>}
-                <br />{shipping.city}, {shipping.state}, India
-                <br />Pincode: {shipping.pincode}
+                {invoice.ship_address_line1}
+                {invoice.ship_address2 && <>, {invoice.ship_address2}</>}
+                <br />{invoice.ship_city}, {invoice.ship_state}, India
+                <br />Pincode: {invoice.ship_pincode}
               </div>
-              {shipping.place_of_supply && (
+              {invoice.ship_state && (
                 <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "4px" }}>
-                  State Code: <strong>{shipping.place_of_supply_code}</strong>
+                  State Code: <strong>{invoice.ship_state_code}</strong>
                 </div>
               )}
             </div>
@@ -843,19 +1001,19 @@ export default function InvoiceDetail() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Invoice Details
               </div>
-              <MetaRow label="Invoice No." value={invoice.invoiceNo} />
-              <MetaRow label="Invoice Date" value={formatDate(invoice.invoiceDate)} />
-              <MetaRow label="Invoice Type" value={invoice.invoiceType} />
-              <MetaRow label="Supply Type" value={invoice.supplyType ? invoice.supplyType.charAt(0).toUpperCase() + invoice.supplyType.slice(1) : "—"} />
-              <MetaRow label="Sub-Supply Type" value={invoice.subSupplyType} />
-              <MetaRow label="Rev. Charge" value={invoice.revCharge} />
-              <MetaRow label="Place of Supply" value={`${customer.place_of_supply} (${customer.place_of_supply_code})`} />
+              <MetaRow label="Invoice No." value={invoice.invoice_no} />
+              <MetaRow label="Invoice Date" value={formatDate(invoice.invoice_date)} />
+              <MetaRow label="Invoice Type" value={invoice.invoice_type} />
+              <MetaRow label="Supply Type" value={invoice.supply_type ? invoice.supply_type.charAt(0).toUpperCase() + invoice.supply_type.slice(1) : "—"} />
+              <MetaRow label="Sub-Supply Type" value={invoice.sub_supply_type} />
+              <MetaRow label="Rev. Charge" value={invoice.reverse_charge} />
+              <MetaRow label="Place of Supply" value={`${invoice.ship_state} (${invoice.ship_state_code})`} />
 
               {/* ── E-Way Bill No. ── */}
-              {ewayBill?.ewayBillNo && (
+              {invoice?.eway_bill_no && (
                 <>
                   <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
-                  <MetaRow label="E-Way Bill No." value={ewayBill.ewayBillNo} />
+                  <MetaRow label="E-Way Bill No." value={invoice.eway_bill_no} />
                 </>
               )}
             </div>
@@ -883,7 +1041,7 @@ export default function InvoiceDetail() {
               </thead>
               <tbody>
                 {items.map((item, i) => (
-                  <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderBottom: "1px solid #e5e7eb" }}>
+                  <tr key={item.id || i} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderBottom: "1px solid #e5e7eb" }}>
                     <td style={{ ...cell(), textAlign: "center", color: "#6b7280", width: "28px" }}>{i + 1}</td>
                     <td style={{ ...cell(), fontWeight: 500, color: "#111827" }}>{item.description}</td>
                     <td style={{ ...cell(), color: "#6b7280", fontFamily: "monospace", fontSize: "11px" }}>{item.hsn || "—"}</td>
@@ -891,21 +1049,19 @@ export default function InvoiceDetail() {
                     <td style={{ ...cell(), textAlign: "right" }}>{item.qty}</td>
                     <td style={{ ...cell(), textAlign: "right" }}> {fmt(item.rate)}</td>
                     <td style={{ ...cell(), textAlign: "right", color: "#dc2626" }}>{item.discount ? `${item.discount}%` : "0.00%"}</td>
-                    <td style={{ ...cell(), textAlign: "right", fontWeight: 600 }}>{fmt(itemTaxable(item))}</td>
-                    <td style={{ ...cell(), textAlign: "right" }}>{item.gstRate}%</td>
-                    <td style={{ ...cell(), textAlign: "right" }}>{fmt(itemTax(item))}</td>
-                    <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 700, color: "#1e3a5f" }}>{fmt(itemTotal(item))}</td>
+                    <td style={{ ...cell(), textAlign: "right", fontWeight: 600 }}>{item.taxable}</td>
+                    <td style={{ ...cell(), textAlign: "right" }}>{item.gst_rate}%</td>
+                    <td style={{ ...cell(), textAlign: "right" }}>{item.tax}</td>
+                    <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 700, color: "#1e3a5f" }}>{item.total}</td>
                   </tr>
                 ))}
                 <tr style={{ background: "#f0f4f8", borderBottom: "1.5px solid #d1d5db", borderTop: "1.5px solid #d1d5db" }}>
-                  <td colSpan={4} style={{ ...cell(), fontWeight: 800, fontSize: "12px", color: "#374151" }}>Total :</td>
-                  <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{items.reduce((s, i) => s + i.qty, 0)}</td>
-                  <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(items.reduce((s, i) => s + i.rate, 0))}</td>
+                  <td colSpan={6} style={{ ...cell(), fontWeight: 800, fontSize: "12px", color: "#374151" }}>Total :</td>
                   <td style={{ ...cell(), textAlign: "right", fontWeight: 700, color: "#dc2626" }}>{fmt(totalDiscount)}</td>
                   <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(grandTaxable)}</td>
                   <td style={{ ...cell() }}></td>
-                  <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(cgst + sgst + igst)}</td>
-                  <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 800, color: "#1e3a5f" }}>{fmt(grandTotal)}</td>
+                  <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(invoice.cgst + invoice.sgst + invoice.igst)}</td>
+                  <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 800, color: "#1e3a5f" }}>{fmt(invoice.grand_total)}</td>
                 </tr>
               </tbody>
             </table>
@@ -949,26 +1105,26 @@ export default function InvoiceDetail() {
               {!isInter ? (
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                    <span style={{ color: "#6b7280" }}>CGST</span><span>{fmt(cgst)}</span>
+                    <span style={{ color: "#6b7280" }}>CGST</span><span>{fmt(invoice.cgst)}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                    <span style={{ color: "#6b7280" }}>SGST</span><span>{fmt(sgst)}</span>
+                    <span style={{ color: "#6b7280" }}>SGST</span><span>{fmt(invoice.sgst)}</span>
                   </div>
                 </>
               ) : (
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                  <span style={{ color: "#6b7280" }}>IGST</span><span>{fmt(igst)}</span>
+                  <span style={{ color: "#6b7280" }}>IGST</span><span>{fmt(invoice.igst)}</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                <span style={{ color: "#6b7280" }}>Tax Amount</span><span style={{ fontWeight: 600 }}>{fmt(cgst + sgst + igst)}</span>
+                <span style={{ color: "#6b7280" }}>Tax Amount</span><span style={{ fontWeight: 600 }}>{fmt(invoice.cgst + invoice.sgst + invoice.igst)}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px" }}>
                 <span style={{ color: "#6b7280" }}>Round Off</span>
                 <span style={{ color: roundOff >= 0 ? "#16a34a" : "#dc2626" }}>{roundOff >= 0 ? "+" : ""}{Math.abs(roundOff).toFixed(2)}</span>
               </div>
               <div style={{ background: "#f0f4f8", border: "1.5px solid #d1d5db", borderRadius: "6px", padding: "10px 14px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#1e3a5f", fontSize: "14px" }}>
-                <span>Net Amount</span><span>{fmt(grandTotal)}</span>
+                <span>Net Amount</span><span>{fmt(invoice.grand_total)}</span>
               </div>
             </div>
           </div>
@@ -992,22 +1148,22 @@ export default function InvoiceDetail() {
                 </tr>
               </thead>
               <tbody>
-                {Object.values(taxSummary).map((row, i) => (
+                {Object.values(items).map((row, i) => (
                   <tr key={i} style={{ borderBottom: "1px solid #e5e7eb", background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
                     <td style={{ ...cell(), textAlign: "center" }}>{i + 1}</td>
                     <td style={{ ...cell(), fontFamily: "monospace" }}>{row.hsn}</td>
                     <td style={{ ...cell(), textAlign: "right", fontWeight: 600 }}> {fmt(row.taxable)}</td>
                     {isInter ? (
                       <>
-                        <td style={{ ...cell(), textAlign: "right" }}>{row.rate}%</td>
-                        <td style={{ ...cell(), textAlign: "right" }}>{fmt(row.igstAmt)}</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{row.gst_rate}%</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{fmt(row.tax)}</td>
                       </>
                     ) : (
                       <>
-                        <td style={{ ...cell(), textAlign: "right" }}>{row.rate / 2}%</td>
-                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.cgstAmt)}</td>
-                        <td style={{ ...cell(), textAlign: "right" }}>{row.rate / 2}%</td>
-                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.sgstAmt)}</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{row.gst_rate / 2}%</td>
+                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.tax / 2)}</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{row.gst_rate / 2}%</td>
+                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.tax / 2)}</td>
                       </>
                     )}
                     <td style={{ ...cell(), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
@@ -1020,14 +1176,14 @@ export default function InvoiceDetail() {
                   {isInter ? (
                     <>
                       <td style={{ ...cell() }}></td>
-                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(igst)}</td>
+                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(invoice.igst)}</td>
                     </>
                   ) : (
                     <>
                       <td style={{ ...cell() }}></td>
-                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(cgst)}</td>
+                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(invoice.cgst)}</td>
                       <td style={{ ...cell() }}></td>
-                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(sgst)}</td>
+                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(invoice.sgst)}</td>
                     </>
                   )}
                   <td style={{ ...cell(), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
@@ -1041,7 +1197,7 @@ export default function InvoiceDetail() {
           <div style={{ borderTop: "1.5px solid #e5e7eb", padding: "12px 24px", background: "#f8fafc" }}>
             <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#374151" }}>Amount in Words: </span>
             <span style={{ fontSize: "12.5px", color: "#111827", fontStyle: "italic" }}>
-              {numberToWords(grandTotal)} Rupees Only
+              {numberToWords(invoice.grand_total)} Rupees Only
             </span>
           </div>
 
@@ -1052,7 +1208,7 @@ export default function InvoiceDetail() {
                 Terms & Conditions
               </div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.8", whiteSpace: "pre-line" }}>
-                {invoice.termsAndConditions || "1. Payment due within 30 days.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction."}
+                {"1. Payment due within 30 days.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction."}
               </div>
             </div>
             <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>

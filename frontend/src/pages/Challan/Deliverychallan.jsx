@@ -1,49 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { FiPrinter, FiShare2, FiArrowLeft, FiDownload } from "react-icons/fi";
 import Logo from "../../assets/logo.svg";
 
-// ─── Mock Data ─────────────────────────────────────────────────────────────
-const mockChallans = [
-  {
-    id: 1,
-    challanNo: "DC-1004",
-    challanDate: "2025-09-15",
-    againstInvoiceNo: "INV-1004",
-    invoiceDate: "2025-09-15",
-    transportMode: "By Road",
-    vehicleNo: "MH-04-AB-1234",
-    placeOfSupply: "Maharashtra",
-    placeOfSupplyCode: "27",
-    customer: {
-      company_name: "AlphaWorks Ltd",
-      gstin: "27AALCA1234F1ZV",
-      pan: "AALCA1234F",
-      phone: "9876543210",
-      email: "accounts@alphaworks.com",
-      address_line1: "101 Industrial Zone, MIDC",
-      address_line2: "Andheri East",
-      city: "Mumbai",
-      state: "Maharashtra",
-      state_code: "27",
-      pincode: "400093",
-    },
-    shipping: {
-      company_name: "AlphaWorks Ltd",
-      address_line1: "101 Industrial Zone, MIDC",
-      address_line2: "Andheri East",
-      city: "Mumbai",
-      state: "Maharashtra",
-      state_code: "27",
-      pincode: "400093",
-    },
-    items: [
-      { description: "Control Panel Wiring", itemCode: "CPW-001", hsn: "85371000", unit: "NOS", qty: 2 },
-      { description: "PLC Programming & Configuration", itemCode: "PLC-002", hsn: "85340000", unit: "SET", qty: 1 },
-      { description: "Cable Tray Installation", itemCode: "CTI-003", hsn: "73089000", unit: "MTR", qty: 20 },
-    ],
-    termsAndConditions: "1. Goods dispatched as per delivery challan only.\n2. This is not a tax invoice.\n3. Subject to Navi Mumbai Jurisdiction.",
-  },
-];
+
 
 const businessInfo = {
   name: "GLS TECHNOLOGIST",
@@ -70,11 +30,104 @@ const MetaRow = ({ label, value }) => (
 export default function DeliveryChallan() {
   const { id } = useParams();
   const navigate = useNavigate();
+   const [invoice, setInvoice] = useState({});
+  const [customer, setCustomer] = useState({});
+  const [items, setItems] = useState([]);
+  const [challan, setChallan] = useState({});
 
-  const challan = mockChallans.find((c) => c.id === Number(id)) || mockChallans[0];
-  const { customer, shipping, items } = challan;
 
   const totalQty = items.reduce((s, i) => s + i.qty, 0);
+
+   useEffect(() => {
+      if (id) {
+        const numericId = Number(id);
+        window.electronAPI.getInvoiceById(numericId).then((res) => {
+          if (res.success) {
+          setInvoice(res.data);       
+          setCustomer(res.data.customer); 
+          setItems(res.data.items);   
+          setChallan(res.data.delivery);   
+        }
+        });
+      }
+    }, [id]);
+
+  const handleDownloadPDF = async () => {
+    const element = document.querySelector(".print-area");
+
+    if (!element) return;
+
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { margin:0; font-family: Arial; }
+              @page { size: A4; margin: 10mm; }
+            </style>
+          </head>
+          <body>
+            ${element.outerHTML}
+          </body>
+        </html>
+      `;
+
+    await window.electronAPI.generatePDF( {fileext: 'Challan',
+      html: html,});
+    //  const res = await window.electronAPI.downloadPDF();
+  };
+
+  const handlePrint = async () => {
+    const element = document.querySelector(".print-area");
+
+      if (!element) return;
+
+        const html = `
+          <html>
+            <head>
+              <style>
+                body { margin:0; font-family: Arial; }
+                @page { size: A4; margin: 10mm; }
+              </style>
+            </head>
+            <body>
+              ${element.outerHTML}
+            </body>
+          </html>
+        `;
+
+      await window.electronAPI.printPDF(html);
+  };
+
+    const handleShare = async () => {
+      try {
+        const element = document.querySelector(".print-area");
+
+        if (!element) return;
+
+          const html = `
+            <html>
+              <head>
+                <style>
+                  body { margin:0; font-family: Arial; }
+                  @page { size: A4; margin: 10mm; }
+                </style>
+              </head>
+              <body>
+                ${element.outerHTML}
+              </body>
+            </html>
+          `;
+
+        const res = await window.electronAPI.generateAutoPDF( {fileext: 'Invoice',
+          html: html,});
+
+        if (res?.success) {
+          await window.electronAPI.sharePDF(res.filePath);
+        }
+      } catch (err) {
+        console.log( err);
+      }
+    };
 
 
   const cell = (extra = {}) => ({
@@ -110,15 +163,15 @@ export default function DeliveryChallan() {
             </div>
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button type="button" 
+            <button type="button" onClick={handleDownloadPDF}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e0e7ff", borderRadius: "8px", background: "#eef2ff", fontSize: "13px", fontWeight: 700, color: "#3730a3", cursor: "pointer" }}>
               <FiDownload size={15} /> Download PDF
             </button>
-            <button type="button" 
+            <button type="button" onClick={handlePrint}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "13px", fontWeight: 700, color: "#374151", cursor: "pointer" }}>
               <FiPrinter size={15} /> Print
             </button>
-            <button type="button" 
+            <button type="button" onClick={handleShare}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13px", fontWeight: 700, color: "#fff", cursor: "pointer" }}>
               <FiShare2 size={15} /> Share
             </button>
@@ -196,16 +249,16 @@ export default function DeliveryChallan() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Shipping Address
               </div>
-              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{shipping.company_name}</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.ship_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {shipping.address_line1}
-                {shipping.address_line2 && <>, {shipping.address_line2}</>}
-                <br />{shipping.city}, {shipping.state}, India
-                <br />Pincode: {shipping.pincode}
+                {invoice.ship_address_line1}
+                {invoice.ship_address_line2 && <>, {invoice.ship_address_line2}</>}
+                <br />{invoice.ship_city}, {invoice.ship_state}, India
+                <br />Pincode: {invoice.ship_pincode}
               </div>
-              {shipping.state_code && (
+              {invoice.ship_state_code && (
                 <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "4px" }}>
-                  State Code: <strong>{shipping.state_code}</strong>
+                  State Code: <strong>{invoice.ship_state_code}</strong>
                 </div>
               )}
             </div>
@@ -215,13 +268,13 @@ export default function DeliveryChallan() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Challan Details
               </div>
-              <MetaRow label="Challan No." value={challan.challanNo} />
-              <MetaRow label="Challan Date" value={formatDate(challan.challanDate)} />
-              <MetaRow label="Against Invoice" value={challan.againstInvoiceNo} />
-              <MetaRow label="Invoice Date" value={formatDate(challan.invoiceDate)} />
-              <MetaRow label="Place of Supply" value={`${challan.placeOfSupply} (${challan.placeOfSupplyCode})`} />
-              <MetaRow label="Transport Mode" value={challan.transportMode} />
-              <MetaRow label="Vehicle No." value={challan.vehicleNo} />
+              <MetaRow label="Challan No." value={challan.challan_no} />
+              <MetaRow label="Challan Date" value={formatDate(challan.challan_date)} />
+              <MetaRow label="Against Invoice" value={challan.against_invoice_no} />
+              <MetaRow label="Invoice Date" value={formatDate(challan.invoice_date)} />
+              <MetaRow label="Place of Supply" value={`${challan.place_of_supply} (${challan.place_of_supply_code})`} />
+              <MetaRow label="Transport Mode" value={challan.transport_mode} />
+              <MetaRow label="Vehicle No." value={challan.vehicle_no} />
             </div>
           </div>
 

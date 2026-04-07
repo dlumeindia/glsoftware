@@ -1,7 +1,10 @@
-const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, dialog } = require("electron");
+const fs = require("fs");
 const path = require("path");
+const { shell } = require("electron");
 const db = require("./database/db.cjs");
 const isDev = !app.isPackaged;
+const os = require("os");
 
 
 function createWindow() {
@@ -22,7 +25,7 @@ function createWindow() {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
-  // win.webContents.openDevTools(); 
+  win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -414,7 +417,11 @@ ipcMain.handle("save-invoice", async (event, data) => {
         vehicleNo,
         deliveryMode,
         from,
+        customerID,
       } = data;
+
+      console.log(billForm);
+      console.log(shipForm);
 
       // ==========================
       // SAFE FUNCTION
@@ -437,10 +444,10 @@ ipcMain.handle("save-invoice", async (event, data) => {
           round_off, grand_total,
           eway_enabled, doc_type, distance,
            transporter_name, transporter_doc,
-          vehicle_no, transport_mode, from_place
+          vehicle_no, transport_mode, from_place, customer_id
           
         )
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
                 ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       `);
 
@@ -455,24 +462,24 @@ ipcMain.handle("save-invoice", async (event, data) => {
         safe(customerType),
 
         safe(billForm.company_name),
-        safe(billForm.gstin),
-        safe(billForm.pan),
-        safe(billForm.email),
-        safe(billForm.phone),
-        safe(billForm.address_line1),
-        safe(billForm.address_line2),
-        safe(billForm.city),
-        safe(billForm.state),
-        safe(billForm.state_code),
-        safe(billForm.pincode),
+        safe(billForm.customer_gstin),
+        safe(billForm.customer_pan),
+        safe(billForm.customer_email),
+        safe(billForm.customer_phone),
+        safe(billForm.customer_address_line1),
+        safe(billForm.customer_address_line2),
+        safe(billForm.customer_city),
+        safe(billForm.customer_state),
+        safe(billForm.customer_state_code),
+        safe(billForm.customer_pincode),
 
         safe(shipForm.company_name),
-        safe(shipForm.address_line1),
-        safe(shipForm.address_line2),
-        safe(shipForm.city),
-        safe(shipForm.state),
-        safe(shipForm.state_code),
-        safe(shipForm.pincode),
+        safe(shipForm.customer_address_line1),
+        safe(shipForm.customer_address_line2),
+        safe(shipForm.customer_city),
+        safe(shipForm.customer_state),
+        safe(shipForm.customer_state_code),
+        safe(shipForm.customer_pincode),
         sameAsBilling ? 1 : 0,
 
          safe(subtotal),
@@ -493,7 +500,8 @@ ipcMain.handle("save-invoice", async (event, data) => {
         safe(transporterDocNo),
         safe(vehicleNo),
         safe(deliveryMode),
-        safe(from)
+        safe(from),
+        safe(customerID)
         
       );
 
@@ -545,6 +553,167 @@ ipcMain.handle("save-invoice", async (event, data) => {
   });
 });
 
+ipcMain.handle("update-invoice", async (event, data) => {
+  try {
+    const {
+      invoice, 
+      invoiceNo,
+      invoiceDate,
+      invoiceType,
+      supplyType,
+      subSupplyType,
+      revCharge,
+      billForm,
+      shipForm,
+      sameAsBilling,
+      subtotal,
+      totalDiscount,
+      taxableAmount,
+      cgst,
+      sgst,
+      igst,
+      items,
+      roundOff,
+      grandTotal,
+      ewayEnabled,
+      docType,
+      approximateDistance,
+      transporterName,
+      transporterDocNo,
+      vehicleNo,
+      deliveryMode,
+      from,
+      customerID,
+    } = data;
+
+    const safe = (val) => val ?? "";
+
+    // ==========================
+    // UPDATE INVOICE
+    // ==========================
+    const stmt = db.prepare(`
+      UPDATE invoices SET
+        invoice_no = ?, invoice_date = ?, invoice_type = ?,
+        supply_type = ?, sub_supply_type = ?, reverse_charge = ?, 
+
+        bill_company_name = ?, bill_gstin = ?, bill_pan = ?, bill_email = ?, bill_phone = ?,
+        bill_address1 = ?, bill_address2 = ?, bill_city = ?, bill_state = ?, bill_state_code = ?, bill_pincode = ?,
+
+        ship_company_name = ?, ship_address1 = ?, ship_address2 = ?, ship_city = ?, 
+        ship_state = ?, ship_state_code = ?, ship_pincode = ?, same_as_billing = ?,
+
+        subtotal = ?, discount = ?, taxable = ?,
+        cgst = ?, sgst = ?, igst = ?, total_tax = ?,
+        round_off = ?, grand_total = ?, 
+
+        eway_enabled = ?, doc_type = ?, distance = ?, 
+        transporter_name = ?, transporter_doc = ?, 
+        vehicle_no = ?, transport_mode = ?, from_place = ?
+
+      WHERE id = ?
+    `);
+
+    stmt.run(
+      safe(invoiceNo),
+      safe(invoiceDate),
+      safe(invoiceType),
+
+      safe(supplyType),
+      safe(subSupplyType),
+      safe(revCharge),
+
+      safe(billForm.company_name),
+      safe(billForm.customer_gstin),
+      safe(billForm.customer_pan),
+      safe(billForm.customer_email),
+      safe(billForm.customer_phone),
+      safe(billForm.customer_address_line1),
+      safe(billForm.customer_address_line2),
+      safe(billForm.customer_city),
+      safe(billForm.customer_state),
+      safe(billForm.customer_state_code),
+      safe(billForm.customer_pincode),
+
+      safe(shipForm.company_name),
+      safe(shipForm.customer_address_line1),
+      safe(shipForm.customer_address_line2),
+      safe(shipForm.customer_city),
+      safe(shipForm.customer_state),
+      safe(shipForm.customer_state_code),
+      safe(shipForm.customer_pincode),
+      sameAsBilling ? 1 : 0,
+
+      safe(subtotal),
+      safe(totalDiscount),
+      safe(taxableAmount),
+      safe(cgst),
+      safe(sgst),
+      safe(igst),
+      safe(cgst + sgst + igst),
+
+      safe(roundOff),
+      safe(grandTotal),
+
+      ewayEnabled ? 1 : 0,
+      safe(docType),
+      safe(approximateDistance),
+      safe(transporterName),
+      safe(transporterDocNo),
+      safe(vehicleNo),
+      safe(deliveryMode),
+      safe(from),
+
+      invoice.id // ✅ WHERE id
+    );
+
+    // ==========================
+    // DELETE OLD ITEMS
+    // ==========================
+    db.prepare(`DELETE FROM invoice_items WHERE invoice_id = ?`).run(invoice.id);
+
+    // ==========================
+    // INSERT UPDATED ITEMS
+    // ==========================
+    const itemStmt = db.prepare(`
+      INSERT INTO invoice_items (
+        invoice_id, description, item_code, hsn, unit,
+        qty, rate, discount, taxable,
+        gst_rate, tax, total
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    items.forEach((item) => {
+      const gross = item.qty * item.rate;
+      const disc = (gross * item.discount) / 100;
+      const taxable = gross - disc;
+      const tax = (taxable * item.gst_rate) / 100;
+      const total = taxable + tax;
+
+      itemStmt.run(
+        invoice.id,
+        safe(item.description),
+        safe(item.item_code), // ✅ fix key
+        safe(item.hsn),
+        safe(item.unit),
+        safe(item.qty),
+        safe(item.rate),
+        safe(item.discount),
+        safe(taxable),
+        safe(item.gst_rate),
+        safe(tax),
+        safe(total)
+      );
+    });
+
+    return { success: true };
+
+  } catch (error) {
+    console.error("❌ Update Invoice Error:", error);
+    return { success: false };
+  }
+});
+
 ipcMain.handle("get-invoices", async () => {
   return new Promise((resolve, reject) => {
     try {
@@ -556,6 +725,8 @@ ipcMain.handle("get-invoices", async () => {
           bill_company_name,
           customer_type,
           grand_total,
+          status,
+          eway_enabled,
           created_at
         FROM invoices
         ORDER BY id DESC
@@ -573,6 +744,33 @@ ipcMain.handle("get-invoices", async () => {
       reject(error);
     }
   });
+});
+
+ipcMain.handle("get-invoice-by-id", async (event, id) => {
+  const invoice = db
+    .prepare("SELECT * FROM invoices WHERE id = ?")
+    .get(id);
+
+    const customer = db
+    .prepare("SELECT * FROM customers WHERE id = ?")
+    .get(invoice.customer_id);
+
+     const delivery = db
+    .prepare("SELECT * FROM delivery_challan WHERE invoice_id = ?")
+    .get(id);
+
+    const items = db
+      .prepare("SELECT * FROM invoice_items WHERE invoice_id = ?")
+      .all(id); 
+   return {
+      success: true,
+      data: {
+        ...invoice,
+        customer,
+        items,
+        delivery,
+      },
+    };
 });
 
 ipcMain.handle("delete-invoice", async (event, id) => {
@@ -600,19 +798,271 @@ ipcMain.handle("mark-invoice-paid", async (event, id) => {
 
 ipcMain.handle("save-eway", async (event, { id, data }) => {
   try {
+    console.log(id);
+    console.log(data);
     db.prepare(`
       UPDATE invoices
-      SET eway_bill_no = ?, vehicle_no = ?, transporter_name = ?
+      SET eway_bill_no = ?, vehicle_no = ?, transporter_name = ?, 
+      eway_enabled = ?, transport_mode = ?
       WHERE id = ?
     `).run(
       data.ewayBillNo,
       data.vehicleNo,
       data.transporterName,
+      1,
+      data.transportMode,
       id
     );
 
     return { success: true };
   } catch (err) {
+    return { success: false };
+  }
+});
+
+ipcMain.handle("generate-pdf", async (event, { fileext, html }) => {
+  try {
+    // Hidden window
+    const pdfWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        sandbox: false,
+      },
+    });
+
+    // Load your HTML
+    await pdfWindow.loadURL(
+      "data:text/html;charset=utf-8," + encodeURIComponent(html)
+    );
+
+    // Wait for render
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Save dialog
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: `${fileext}-${Date.now()}.pdf`,
+      filters: [{ name: "PDF", extensions: ["pdf"] }],
+    });
+
+    if (canceled) {
+      pdfWindow.close();
+      return;
+    }
+
+    // Generate PDF
+    const pdfBuffer = await pdfWindow.webContents.printToPDF({
+      printBackground: true,
+      pageSize: "A4",
+    });
+
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    pdfWindow.close();
+
+    return { success: true, filePath };
+  } catch (err) {
+    console.error("PDF Error:", err);
+    return { success: false };
+  }
+});
+
+ipcMain.handle("download-pdf", async (event) => {
+  try {
+    const win = BrowserWindow.fromWebContents(event.sender);
+
+    // Save dialog
+    const { canceled, filePath } = await dialog.showSaveDialog(win, {
+      defaultPath: `Invoice-${Date.now()}.pdf`,
+      filters: [{ name: "PDF Files", extensions: ["pdf"] }],
+    });
+
+    if (canceled) return { success: false };
+
+    // Generate PDF (THIS LINE YOU ASKED)
+    const pdfBuffer = await win.webContents.printToPDF({
+      printBackground: true, // ✅ VERY IMPORTANT (colors + logo)
+      pageSize: "A4",
+      landscape: false,
+      marginsType: 0,
+    });
+
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
+  }
+});
+
+ipcMain.handle("share-pdf", async (event, filePath) => {
+  try {
+   const message = `Here is your invoice PDF:\n${filePath}`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+    await shell.openExternal(url);
+
+    return { success: true };
+  } catch (err) {
+    console.error("Share error:", err);
+    return { success: false };
+  }
+});
+
+ipcMain.handle("generate-pdf-auto", async (event,  { fileext, html }) => {
+  try {
+    const pdfWindow = new BrowserWindow({
+      show: false,
+      webPreferences: { sandbox: false },
+    });
+
+    await pdfWindow.loadURL(
+      "data:text/html;charset=utf-8," + encodeURIComponent(html)
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Auto path (no dialog)
+    const filePath = path.join(
+      os.tmpdir(),
+      `${fileext}-${Date.now()}.pdf`
+    );
+
+    const pdfBuffer = await pdfWindow.webContents.printToPDF({
+      printBackground: true,
+      pageSize: "A4",
+    });
+
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    pdfWindow.close();
+
+    return { success: true, filePath };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
+  }
+});
+
+  let printWindow = null; // ✅ global reference (VERY IMPORTANT)
+
+ipcMain.handle("print-pdf", async (event, html) => {
+  try {
+    const { BrowserWindow } = require("electron");
+
+    const win = new BrowserWindow({
+      show: false,
+    });
+
+    await win.loadURL(
+      "data:text/html;charset=utf-8," + encodeURIComponent(html)
+    );
+
+    // wait for render
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // 🔥 generate PDF buffer
+    const pdfBuffer = await win.webContents.printToPDF({
+      printBackground: true,
+      pageSize: "A4",
+    });
+
+    // save temp file
+    const fs = require("fs");
+    const path = require("path");
+    const { app } = require("electron");
+
+    const filePath = path.join(app.getPath("temp"), "challan-print.pdf");
+
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    // 🔥 open PDF in default viewer (this gives preview)
+    require("electron").shell.openPath(filePath);
+
+    return { success: true };
+
+  } catch (err) {
+    console.error(err);
+    return { success: false };
+  }
+});
+
+ipcMain.handle("dashboard:get-stats", async () => {
+  const totalInvoices = db
+    .prepare("SELECT COUNT(*) as count FROM invoices")
+    .get();
+
+  const totalPaid = db
+    .prepare("SELECT SUM(grand_total) as total FROM invoices WHERE status = 'Paid'")
+    .get();
+
+  const totalUnpaid = db
+    .prepare("SELECT SUM(grand_total) as total FROM invoices WHERE status = 'Unpaid'")
+    .get();
+
+  return {
+    totalInvoices: totalInvoices.count || 0,
+    totalPaid: totalPaid.total || 0,
+    totalUnpaid: totalUnpaid.total || 0,
+  };
+});
+
+ipcMain.handle("dashboard:get-recent-invoices", async () => {
+  const invoices = db
+    .prepare(`
+      SELECT 
+        id,
+        invoice_no as number,
+        bill_company_name as client,
+        grand_total as amount,
+        status
+      FROM invoices
+      ORDER BY id DESC
+      LIMIT 5
+    `)
+    .all();
+
+  return invoices;
+});
+
+ipcMain.handle("delivery-challan:create", async (event, data) => {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO delivery_challan (
+        invoice_id,
+        challan_no,
+        challan_date,
+        against_invoice_no,
+        transport_mode,
+        vehicle_no,
+        place_of_supply,
+        place_of_supply_code,
+        terms_and_conditions
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = stmt.run(
+      data.invoice_id,
+      data.challanNo,
+      data.challanDate,
+      data.againstInvoiceNo,
+      data.transportMode,
+      data.vehicleNo,
+      data.placeOfSupply,
+      data.placeOfSupplyCode,
+      data.termsAndConditions
+    );
+    
+    db.prepare(`
+      UPDATE invoices SET challan = 1 WHERE id = ?
+    `).run(data.invoice_id);    
+
+
+    return { success: true, id: result.lastInsertRowid };
+  } catch (err) {
+    console.error(err);
     return { success: false };
   }
 });

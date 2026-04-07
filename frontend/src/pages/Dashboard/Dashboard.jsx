@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import StatCard from "../../components/StatCard";
 import Card from "../../components/Card";
 import Table from "../../components/Table";
@@ -7,32 +8,32 @@ HiOutlineDocumentText,
 HiOutlineCurrencyDollar,
 } from "react-icons/hi";
 
-const recentInvoices = [
-{
-id: 1,
-number: "INV-1004",
-client: "AlphaWorks Ltd",
-amount: "$2510.00",
-dueDate: "Sep 30, 2025",
-status: "Paid",
-},
-{
-id: 2,
-number: "INV-1005",
-client: "BetaForge Inc",
-amount: "$1855.00",
-dueDate: "Sep 30, 2025",
-status: "Unpaid",
-},
-{
-id: 3,
-number: "INV-1002",
-client: "John",
-amount: "$5426.33",
-dueDate: "Sep 11, 2025",
-status: "Paid",
-},
-];
+// const recentInvoices = [
+// {
+// id: 1,
+// number: "INV-1004",
+// client: "AlphaWorks Ltd",
+// amount: "$2510.00",
+// dueDate: "Sep 30, 2025",
+// status: "Paid",
+// },
+// {
+// id: 2,
+// number: "INV-1005",
+// client: "BetaForge Inc",
+// amount: "$1855.00",
+// dueDate: "Sep 30, 2025",
+// status: "Unpaid",
+// },
+// {
+// id: 3,
+// number: "INV-1002",
+// client: "John",
+// amount: "$5426.33",
+// dueDate: "Sep 11, 2025",
+// status: "Paid",
+// },
+// ];
 
 const columns = [
 {
@@ -61,6 +62,29 @@ className={`px-3 py-1 rounded-full text-xs font-medium ${
 
 const Dashboard = () => {
 const navigate = useNavigate();
+const [stats, setStats] = useState({
+    totalInvoices: 0,
+    totalPaid: 0,
+    totalUnpaid: 0,
+  });
+
+  const [recentInvoices, setRecentInvoices] = useState([]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const statsData = await window.electronAPI.getDashboardStats();
+      const invoicesData = await window.electronAPI.getRecentInvoices();
+
+      setStats(statsData);
+      setRecentInvoices(invoicesData);
+    } catch (error) {
+      console.error("Dashboard error:", error);
+    }
+  };
 
 return ( <div className="space-y-6">
 
@@ -76,22 +100,21 @@ return ( <div className="space-y-6">
   {/* Stats */}
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <StatCard
-      title="Total Invoices"
-      value="6"
+      value={`${Number(stats.totalInvoices)}`}
       icon={HiOutlineDocumentText}
       iconBg="bg-blue-100"
       iconColor="text-blue-600"
     />
     <StatCard
       title="Total Paid"
-      value="$10,756.83"
+      value={`$${Number(stats.totalPaid).toFixed(2)}`}
       icon={HiOutlineCurrencyDollar}
       iconBg="bg-green-100"
       iconColor="text-green-600"
     />
     <StatCard
       title="Total Unpaid"
-      value="$69,460.00"
+      value={`$${Number(stats.totalUnpaid).toFixed(2)}`}
       icon={HiOutlineCurrencyDollar}
       iconBg="bg-red-100"
       iconColor="text-red-600"

@@ -254,8 +254,8 @@ const Invoices = () => {
           client: inv.bill_company_name,
           amount: `₹ ${Number(inv.grand_total).toLocaleString("en-IN")}`,
           dueDate: inv.invoice_date,
-          status: "Unpaid", // you can add DB field later
-          ewayBill: null,   // same here
+          status: inv.status, // you can add DB field later
+          ewayBill: inv.eway_enabled,   // same here
         }));
 
         setInvoices(formatted);

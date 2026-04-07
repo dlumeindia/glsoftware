@@ -135,6 +135,7 @@ db.prepare(`
       vehicle_no TEXT,
       transport_mode TEXT,
       from_place TEXT,
+      status,
 
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -163,6 +164,42 @@ db.prepare(`
       FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
     )
   `).run();
+
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS delivery_challan (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      invoice_id INTEGER,
+
+      challan_no TEXT,
+      challan_date TEXT,
+      against_invoice_no TEXT,
+      invoice_date TEXT,
+      transport_mode TEXT,
+      vehicle_no TEXT,
+      place_of_supply TEXT,
+      place_of_supply_code TEXT,
+      terms_and_conditions TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  
+
+// db.prepare(`
+//   ALTER TABLE invoices ADD COLUMN customer_id TEXT
+// `).run();
+
+// db.prepare(`
+//   ALTER TABLE invoices ADD COLUMN eway_bill_date DATETIME 
+// `).run();
+
+// db.prepare(`
+//   ALTER TABLE invoices ADD COLUMN eway_valid_upto DATETIME 
+// `).run();
+
+
+
+
 
 
 
