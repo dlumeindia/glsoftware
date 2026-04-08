@@ -20,7 +20,6 @@ const indianStates = [
 ];
 
 const businessTypes = ["Proprietorship", "Partnership", "LLP", "Private Limited", "Public Limited", "OPC", "Trust", "HUF", "Other"];
-const customerTypes = ["B2B", "B2c"];
 
 const inputStyle = {
   width: "100%",
@@ -35,7 +34,7 @@ const inputStyle = {
 };
 
 const emptyForm = {
- customer_name: "",  company_name: "", customer_type: "", business_type: "",
+ customer_name: "",  company_name: "",  business_type: "",
   customer_gstin: "", customer_pan: "", customer_phone: "", customer_alt_phone: "",
   customer_email: "", customer_website: "",
   customer_address_line1: "", customer_address_line2: "",
@@ -82,7 +81,7 @@ function TextInput({ value, onChange, placeholder, type = "text", readOnly }) {
   );
 }
 
-function SelectInput({ value, onChange, options, placeholder }) {
+function SelectInput({ value, onChange, options, }) {
   return (
     <select
       value={value}
@@ -95,7 +94,7 @@ function SelectInput({ value, onChange, options, placeholder }) {
         backgroundPosition: "right 12px center",
       }}
     >
-      <option value="">{placeholder}</option>
+      <option value=""></option>
       {options.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>
       ))}
@@ -208,6 +207,7 @@ if (!form.customer_name.trim())
   const e = validate();
   if (Object.keys(e).length) {
     setErrors(e);
+     alert("✅ Customer saved successfully!");
     return;
   }
 
@@ -270,7 +270,7 @@ if (!form.customer_name.trim())
       <TextInput
         value={form.customer_name}
         onChange={(e) => update("customer_name", e.target.value)}
-        placeholder="Rahul Sharma"
+       
       />
       <ErrorMsg field="customer_name" errors={errors} />
     </Field>
@@ -280,21 +280,12 @@ if (!form.customer_name.trim())
       <TextInput
         value={form.company_name}
         onChange={(e) => update("company_name", e.target.value)}
-        placeholder="ABC Industries Pvt Ltd"
+       
       />
       <ErrorMsg field="company_name" errors={errors} />
     </Field>
 
-    {/* Customer Type */}
-    <Field label="Customer Type">
-      <SelectInput
-        value={form.customer_type}
-        onChange={(e) => update("customer_type", e.target.value)}
-        placeholder="Select Type"
-        options={customerTypes.map((t) => ({ value: t, label: t }))}
-      />
-    </Field>
-
+  
     {/* Business Type */}
     <Field label="Business Type">
       <SelectInput
@@ -345,11 +336,11 @@ if (!form.customer_name.trim())
             <CharBoxInput value={form.customer_alt_phone} onChange={(v) => update("customer_alt_phone", v)} length={10} numericOnly />
           </Field>
           <Field label="Email Address">
-            <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="billing@company.com" />
+            <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} />
             <ErrorMsg field="customer_email" errors={errors} />
           </Field>
           <Field label="Website">
-            <TextInput value={form.customer_website} onChange={(e) => update("customer_website", e.target.value)} placeholder="https://www.company.com" />
+            <TextInput value={form.customer_website} onChange={(e) => update("customer_website", e.target.value)}  />
           </Field>
         </div>
       </Section>
@@ -358,14 +349,14 @@ if (!form.customer_name.trim())
       <Section title="Billing Address" icon="📍">
         <div style={grid2}>
           <Field label="Address Line 1" required>
-            <TextInput value={form.customer_address_line1} onChange={(e) => update("customer_address_line1", e.target.value)} placeholder="Building, Street, Area" />
+            <TextInput value={form.customer_address_line1} onChange={(e) => update("customer_address_line1", e.target.value)} />
             <ErrorMsg field="customer_address_line1" errors={errors} />
           </Field>
           <Field label="Address Line 2">
-            <TextInput value={form.customer_address_line2} onChange={(e) => update("customer_address_line2", e.target.value)} placeholder="Landmark (optional)" />
+            <TextInput value={form.customer_address_line2} onChange={(e) => update("customer_address_line2", e.target.value)}  />
           </Field>
           <Field label="City" required>
-            <TextInput value={form.customer_city} onChange={(e) => update("customer_city", e.target.value)} placeholder="Mumbai" />
+            <TextInput value={form.customer_city} onChange={(e) => update("customer_city", e.target.value)}  />
             <ErrorMsg field="customer_city" errors={errors} />
           </Field>
           <Field label="State" required>
@@ -374,12 +365,12 @@ if (!form.customer_name.trim())
             <ErrorMsg field="customer_state" errors={errors} />
           </Field>
           <Field label="State Code">
-            <TextInput value={form.customer_state_code} readOnly onChange={() => {}} placeholder="27" />
+            <TextInput value={form.customer_state_code} readOnly onChange={() => {}}  />
           </Field>
           <Field label="Pincode" required>
             <TextInput value={form.customer_pincode}
               onChange={(e) => update("customer_pincode", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-              placeholder="400001" />
+               />
             <ErrorMsg field="customer_pincode" errors={errors} />
           </Field>
         </div>
@@ -412,25 +403,25 @@ if (!form.customer_name.trim())
         ) : (
           <div style={grid2}>
             <Field label="Address Line 1">
-              <TextInput value={form.shipping_address_line1} onChange={(e) => update("shipping_address_line1", e.target.value)} placeholder="Building, Street, Area" />
+              <TextInput value={form.shipping_address_line1} onChange={(e) => update("shipping_address_line1", e.target.value)}  />
             </Field>
             <Field label="Address Line 2">
-              <TextInput value={form.shipping_address_line2} onChange={(e) => update("shipping_address_line2", e.target.value)} placeholder="Landmark (optional)" />
+              <TextInput value={form.shipping_address_line2} onChange={(e) => update("shipping_address_line2", e.target.value)}  />
             </Field>
             <Field label="City">
-              <TextInput value={form.shipping_city} onChange={(e) => update("shipping_city", e.target.value)} placeholder="Mumbai" />
+              <TextInput value={form.shipping_city} onChange={(e) => update("shipping_city", e.target.value)}  />
             </Field>
             <Field label="State">
               <SelectInput value={form.shipping_state} onChange={(e) => update("shipping_state", e.target.value)}
                 placeholder="Select State" options={indianStates.map((s) => ({ value: s.name, label: s.name }))} />
             </Field>
             <Field label="State Code">
-              <TextInput value={form.shipping_state_code} readOnly onChange={() => {}} placeholder="27" />
+              <TextInput value={form.shipping_state_code} readOnly onChange={() => {}}  />
             </Field>
             <Field label="Pincode">
               <TextInput value={form.shipping_pincode}
                 onChange={(e) => update("shipping_pincode", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-                placeholder="400001" />
+               />
             </Field>
           </div>
         )}

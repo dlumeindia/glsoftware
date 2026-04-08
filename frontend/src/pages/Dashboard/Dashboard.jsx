@@ -13,7 +13,7 @@ HiOutlineCurrencyDollar,
 // id: 1,
 // number: "INV-1004",
 // client: "AlphaWorks Ltd",
-// amount: "$2510.00",
+// amount: "₹2510.00",
 // dueDate: "Sep 30, 2025",
 // status: "Paid",
 // },
@@ -21,7 +21,7 @@ HiOutlineCurrencyDollar,
 // id: 2,
 // number: "INV-1005",
 // client: "BetaForge Inc",
-// amount: "$1855.00",
+// amount: "₹1855.00",
 // dueDate: "Sep 30, 2025",
 // status: "Unpaid",
 // },
@@ -107,14 +107,14 @@ return ( <div className="space-y-6">
     />
     <StatCard
       title="Total Paid"
-      value={`$${Number(stats.totalPaid).toFixed(2)}`}
+      value={`₹${Number(stats.totalPaid).toFixed(2)}`}
       icon={HiOutlineCurrencyDollar}
       iconBg="bg-green-100"
       iconColor="text-green-600"
     />
     <StatCard
       title="Total Unpaid"
-      value={`$${Number(stats.totalUnpaid).toFixed(2)}`}
+      value={`₹${Number(stats.totalUnpaid).toFixed(2)}`}
       icon={HiOutlineCurrencyDollar}
       iconBg="bg-red-100"
       iconColor="text-red-600"

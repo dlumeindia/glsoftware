@@ -103,7 +103,8 @@ function EWayBillModal({ invoice, onClose, onGenerate }) {
             <input value={form.ewayBillNo} onChange={(e) => update("ewayBillNo", e.target.value)} placeholder="e.g. 331234567890"
               style={{ ...inp("ewayBillNo"), fontFamily: "monospace" }}
               onFocus={(e) => e.target.style.borderColor = "#3b82f6"} onBlur={(e) => e.target.style.borderColor = errors.ewayBillNo ? "#ef4444" : "#e5e7eb"} />
-<Err field="ewayBillNo" errors={errors} />          </Field>
+<Err field="ewayBillNo" errors={errors} />     
+     </Field>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
             <Field label="E-Way Bill Date" required>
               <input type="date" value={form.ewayBillDate} onChange={(e) => update("ewayBillDate", e.target.value)} style={inp("ewayBillDate")}
@@ -201,6 +202,11 @@ const Invoices = () => {
   
 
   const handleDelete = async (invoice) => {
+     const confirmDelete = window.confirm(
+    `Are you sure you want to delete ${invoice.number}?`
+  );
+    if (!confirmDelete) return;
+
     const res = await window.electronAPI.deleteInvoice(invoice.id);
 
     if (res.success) {

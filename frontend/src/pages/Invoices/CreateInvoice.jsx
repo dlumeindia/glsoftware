@@ -75,7 +75,6 @@ const getFieldRules = (customerType) => ({
   customer_state: true,
   customer_pincode: true,
   customer_gstin: customerType === "B2B",
-  customer_pan: customerType === "B2C",
   customer_email: customerType === "B2B",
 });
 
@@ -104,12 +103,11 @@ const inputStyle = {
   boxSizing: "border-box",
 };
 
-const TextInput = ({ value, onChange, placeholder, type = "text", readOnly }) => (
+const TextInput = ({ value, onChange, type = "text", readOnly }) => (
   <input
     type={type}
     value={value}
     onChange={onChange}
-    placeholder={placeholder}
     readOnly={readOnly}
     style={{ ...inputStyle, background: "#ffffff", cursor: readOnly ? "not-allowed" : "text" }}
     onFocus={(e) => !readOnly && (e.target.style.borderColor = "#3b82f6")}
@@ -117,7 +115,7 @@ const TextInput = ({ value, onChange, placeholder, type = "text", readOnly }) =>
   />
 );
 
-const SelectInput = ({ value, onChange, options, placeholder }) => (
+const SelectInput = ({ value, onChange, options,  }) => (
   <select
     value={value}
     onChange={onChange}
@@ -129,7 +127,7 @@ const SelectInput = ({ value, onChange, options, placeholder }) => (
       backgroundPosition: "right 12px center",
     }}
   >
-    <option value="">{placeholder}</option>
+    <option value=""></option>
     {options.map((o) => (
       <option key={o.value || o} value={o.value || o}>{o.label || o}</option>
     ))}
@@ -175,7 +173,7 @@ const OtpInput = ({ value, onChange, length, numbersOnly = false }) => (
 );
 
 const emptyAddress = {
-  company_name: "", customer_gstin: "", customer_pan: "", customer_address_line1: "", customer_address_line2: "",
+  company_name: "", customer_gstin: "",  customer_address_line1: "", customer_address_line2: "",
   customer_city: "", customer_state: "", customer_state_code: "", customer_pincode: "", customer_email: "", customer_phone: "",
   place_of_supply: "", place_of_supply_code: "",
 };
@@ -187,7 +185,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
       <Field label={customerType === "B2B" ? "Company / Name" : "Customer Name"} required={fieldRules.company_name}>
-        <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)} placeholder={customerType === "B2B" ? "Company Name" : "Full Name"} />
+        <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)}/>
       </Field>
       <Field label="Email" required={fieldRules.customer_email} hint={!fieldRules.customer_email ? "optional" : undefined}>
         <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="billing@company.com" />
@@ -204,10 +202,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
           <OtpInput value={form.customer_gstin || ""} onChange={(v) => update("customer_gstin", v)} length={15} />
         </Field>
       )}
-      <Field label="PAN" required={fieldRules.customer_pan} hint={customerType === "B2B" ? "optional" : "required if sale > ₹2L"}>
-        <OtpInput value={form.customer_pan || ""} onChange={(v) => update("customer_pan", v)} length={10} />
-      </Field>
-      <div />
+     
       <Field label="Address Line 1" required={fieldRules.customer_address_line1}>
         <TextInput value={form.customer_address_line1} onChange={(e) => update("customer_address_line1", e.target.value)} placeholder="Building, Street, Area" />
       </Field>
@@ -637,7 +632,7 @@ export default function CreateInvoice() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "#f8fafc" }}>
-                {["#", "Description", "HSN/SAC", "Code", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
+                {["#", "Description", "HSN/SAC", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
                   <th key={h} style={{ padding: "10px 10px", textAlign: ["Taxable (₹)", "Tax (₹)", "Total (₹)", "Rate (₹)"].includes(h) ? "right" : "left", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -653,7 +648,7 @@ export default function CreateInvoice() {
                     <input value={item.itemCode} onChange={(e) => updateItem(i, "itemCode", e.target.value)} placeholder="Code" style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "80px" }}>
-                    <input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} placeholder="HSN" style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
+                    <input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "75px" }}>
                     <select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...inputStyle, padding: "6px 7px", fontSize: "12px" }}>
