@@ -216,7 +216,10 @@ const handleHeaderUpload = (e) => {
 
     const res = await window.electronAPI.saveProfile({
       userId: user.id,
-      profile
+      profile: {
+        ...profile,
+        header_image: headerImage,
+      }
     });
 
     if (res.success) {
@@ -234,6 +237,7 @@ const handleHeaderUpload = (e) => {
 
       if (data) {
         setProfile(data);
+        setHeaderImage(data.header_image);
       }
 
     };

@@ -4,6 +4,7 @@ import {
   HiOutlinePlusCircle,
   HiOutlineUser,
 } from "react-icons/hi";
+import { useState, useEffect } from "react";
 import { HiOutlineSquares2X2 } from "react-icons/hi2";
 import { ChevronDown } from "lucide-react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -19,8 +20,35 @@ const navItems = [
 
 const MainLayout = () => {
   const { user, logout  } = useAuth();
-    const navigate = useNavigate();
-const location = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [profile, setProfile] = useState({
+      // Business Identity
+      business_name: "D'Lume Software",
+      business_type: "",
+      pan: "",
+      gstin: "",
+      // Address
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      state: "",
+      state_code: "",
+      pincode: "",
+      // Contact
+      
+    });
+
+    useEffect(() => {
+      const loadProfile = async () => {
+        const data = await window.electronAPI.getProfile(user.id);
+        if (data) {
+          setProfile(data);
+        }
+      };
+      loadProfile();
+    }, []);
+
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
 
@@ -33,7 +61,7 @@ const location = useLocation();
             <HiOutlineSquares2X2 size={20} />
           </div>
           <span className="font-semibold text-gray-800 text-base">
-            GLS Precious
+           {profile?.business_name || "D'Lume Software"}
           </span>
         </div>
 

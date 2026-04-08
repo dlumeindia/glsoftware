@@ -8,7 +8,7 @@ import Input from "../../components/Input";
 import Button from "../../components/Button";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);

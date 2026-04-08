@@ -6,6 +6,12 @@ const db = require("./database/db.cjs");
 const isDev = !app.isPackaged;
 const os = require("os");
 
+const safe = (val) => {
+  if (val === undefined || val === null) return "";
+  if (typeof val === "object") return JSON.stringify(val); // OR extract value
+  return String(val);
+};
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -19,13 +25,13 @@ function createWindow() {
 
   Menu.setApplicationMenu(null);
 
-  if (isDev) {
+ if (isDev) {
     win.loadURL("http://localhost:5173");
   } else {
-    win.loadFile(path.join(__dirname, "../dist/index.html"));
+    win.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
   }
 
-  win.webContents.openDevTools(); 
+  // win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -120,7 +126,8 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
       account_type=?,
       invoice_prefix=?,
       invoice_series=?,
-      terms=?
+      terms=?,
+      header_image=?
       WHERE user_id=?
     `).run(
       profile.business_name,
@@ -144,6 +151,7 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
       profile.invoice_prefix,
       profile.invoice_series,
       profile.terms,
+      profile.header_image,
       userId
     );
 
@@ -155,9 +163,9 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
         address_line1,address_line2,city,state,state_code,pincode,
         phone,email,website,
         bank_name,branch,account_no,ifsc,account_type,
-        invoice_prefix,invoice_series,terms
+        invoice_prefix,invoice_series,terms, header_image
       )
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).run(
       userId,
       profile.business_name,
@@ -180,7 +188,8 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
       profile.account_type,
       profile.invoice_prefix,
       profile.invoice_series,
-      profile.terms
+      profile.terms,
+      profile.header_image
     );
 
   }
@@ -897,15 +906,10 @@ ipcMain.handle("download-pdf", async (event) => {
 
 ipcMain.handle("share-pdf", async (event, filePath) => {
   try {
-   const message = `Here is your invoice PDF:\n${filePath}`;
-
-    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-    await shell.openExternal(url);
-
+    await shell.openPath(filePath); 
     return { success: true };
   } catch (err) {
-    console.error("Share error:", err);
+    console.error(err);
     return { success: false };
   }
 });
@@ -1068,8 +1072,3 @@ ipcMain.handle("delivery-challan:create", async (event, data) => {
 });
 
 
-const safe = (val) => {
-  if (val === undefined || val === null) return "";
-  if (typeof val === "object") return JSON.stringify(val); // OR extract value
-  return String(val);
-};

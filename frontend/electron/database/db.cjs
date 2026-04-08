@@ -136,6 +136,12 @@ db.prepare(`
       transport_mode TEXT,
       from_place TEXT,
       status,
+      eway_bill_no,
+      eway_bill_date DaTETIME,
+      eway_valid_upto DATETIME, 
+      generated_at DaTETIME,
+      customer_id INTEGER,  
+      challan_id INTEGER,
 
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
