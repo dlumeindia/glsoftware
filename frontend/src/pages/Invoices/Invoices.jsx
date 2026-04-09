@@ -202,10 +202,7 @@ const Invoices = () => {
   
 
   const handleDelete = async (invoice) => {
-     const confirmDelete = window.confirm(
-    `Are you sure you want to delete ${invoice.number}?`
-  );
-    if (!confirmDelete) return;
+   
 
     const res = await window.electronAPI.deleteInvoice(invoice.id);
 

@@ -11,9 +11,6 @@ const Login = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  if(user){
-    navigate("/dashboard");
-  }
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");

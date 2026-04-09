@@ -59,7 +59,7 @@ return ( <div className="space-y-6">
   searchPlaceholder="Search customers..."
   onRowClick={(row) => navigate(`/customers/${row.id}`)}
   onDelete={async (row) => {
-    if (!window.confirm("Delete this customer?")) return;
+    
 
     const res = await window.electronAPI.deleteCust(row.id);
 

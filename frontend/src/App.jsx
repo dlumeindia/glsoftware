@@ -7,11 +7,11 @@ import "./index.css";
 function App() {
   return (
     <>
-      <AuthProvider>
-        <HashRouter >
+      <HashRouter >
+        <AuthProvider>
           <AppRoutes />
-        </HashRouter >
-      </AuthProvider>
+        </AuthProvider>
+      </HashRouter >
 
       <Toaster position="top-right" />
     </>
