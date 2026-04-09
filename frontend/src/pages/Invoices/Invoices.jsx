@@ -80,6 +80,7 @@ function EWayBillModal({ invoice, onClose, onGenerate }) {
 
   const inp = (field) => ({ ...inputStyle, borderColor: errors[field] ? "#ef4444" : "#e5e7eb" });
 
+
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999, backdropFilter: "blur(2px)" }} />
@@ -148,14 +149,26 @@ function EWayBillModal({ invoice, onClose, onGenerate }) {
 function EWayBillButton({ invoice, onOpen }) {
   if (invoice.ewayBill) {
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", background: "#f0fdf4", border: "1.5px solid #86efac", fontSize: "12px", fontWeight: 700, color: "#16a34a", whiteSpace: "nowrap" }}>
-        <FiCheckCircle size={13} /> E-Way 
-      </div>
+<div style={{
+  display: "inline-flex",   // ✅ important (not full width)
+  alignItems: "center",
+  gap: "4px",               // smaller spacing
+  padding: "3px 8px",       // ✅ compact
+  borderRadius: "6px",
+  background: "#f0fdf4",
+  border: "1px solid #86efac", // thinner border
+  fontSize: "11px",         // smaller text
+  fontWeight: 600,
+  color: "#16a34a",
+  whiteSpace: "nowrap"
+}}>
+  <FiCheckCircle size={11} /> E-Way
+</div>       
     );
   }
   return (
     <button onClick={(e) => { e.stopPropagation(); onOpen(invoice); }}
-      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", background: "#eff6ff", border: "1.5px solid #bfdbfe", fontSize: "12px", fontWeight: 700, color: "#1d4ed8", cursor: "pointer", whiteSpace: "nowrap" }}>
+      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 6px", borderRadius: "8px", background: "#eff6ff", border: "1.5px solid #bfdbfe", fontSize: "12px", fontWeight: 700, color: "#1d4ed8", cursor: "pointer", whiteSpace: "nowrap" }}>
       <FiTruck size={13} /> E-Way 
     </button>
   );
@@ -172,7 +185,7 @@ function MarkAsPaidButton({ invoice, onMarkPaid }) {
         display: "flex",
         alignItems: "center",
         gap: "6px",
-        padding: "6px 12px",
+        padding: "6px 6px",
         borderRadius: "8px",
         fontSize: "12px",
         fontWeight: 700,
@@ -195,33 +208,49 @@ function MarkAsPaidButton({ invoice, onMarkPaid }) {
 
 
 const Invoices = () => {
+
+  const [fromDate, setFromDate] = useState("");
+const [toDate, setToDate] = useState("");
+
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [ewayModal, setEwayModal] = useState(null);
 
   
 
-  const handleDelete = async (invoice) => {
-   
+ const handleDelete = async (invoice) => {
+  const confirmDelete = window.confirm(
+    `Are you sure you want to delete Invoice #${invoice.number}?`
+  );
 
-    const res = await window.electronAPI.deleteInvoice(invoice.id);
+  if (!confirmDelete) return; // ❌ stop if user clicks Cancel
 
-    if (res.success) {
-      setInvoices((prev) => prev.filter((i) => i.id !== invoice.id));
-    }
-  };
+  const res = await window.electronAPI.deleteInvoice(invoice.id);
 
-  const handleMarkPaid = async (invoiceId) => {
-    const res = await window.electronAPI.markInvoicePaid(invoiceId);
+  if (res.success) {
+    setInvoices((prev) => prev.filter((i) => i.id !== invoice.id));
+  }
+};
 
-    if (res.success) {
-      setInvoices((prev) =>
-        prev.map((inv) =>
-          inv.id === invoiceId ? { ...inv, status: "Paid" } : inv
-        )
-      );
-    }
-  };
+const handleMarkPaid = async (invoiceId) => {
+  const invoice = invoices.find((inv) => inv.id === invoiceId);
+
+  const confirmPaid = window.confirm(
+    `Mark Invoice #${invoice?.number} as Paid?`
+  );
+
+  if (!confirmPaid) return; // ❌ stop if cancel
+
+  const res = await window.electronAPI.markInvoicePaid(invoiceId);
+
+  if (res.success) {
+    setInvoices((prev) =>
+      prev.map((inv) =>
+        inv.id === invoiceId ? { ...inv, status: "Paid" } : inv
+      )
+    );
+  }
+};
 
   const handleGenerateEway = async (invoiceId, ewayData) => {
     const res = await window.electronAPI.saveEway({
@@ -254,7 +283,8 @@ const Invoices = () => {
         const formatted = res.data.map((inv) => ({
           id: inv.id,
           number: inv.invoice_no,
-          client: inv.bill_company_name,
+         company: inv.bill_company_name,
+customer: inv.customer_name,
           amount: `₹ ${Number(inv.grand_total).toLocaleString("en-IN")}`,
           dueDate: inv.invoice_date,
           status: inv.status, // you can add DB field later
@@ -269,9 +299,11 @@ const Invoices = () => {
   };
 const columns = [
   { key: "number", label: "Invoice #" },
-  { key: "client", label: "Client" },
+
+  { key: "company", label: "Company" },   // ✅ NEW
+  { key: "customer", label: "Customer" }, // ✅ NEW
+
   { key: "amount", label: "Amount" },
-  { key: "dueDate", label: "Due Date" },
 
   {
     key: "status",
@@ -293,18 +325,60 @@ const columns = [
   },
 ];
 
+
+const filteredInvoices = invoices.filter((inv) => {
+  if (!fromDate && !toDate) return true;
+
+  const invoiceDate = new Date(inv.dueDate);
+
+  if (fromDate && new Date(fromDate) > invoiceDate) return false;
+  if (toDate && new Date(toDate) < invoiceDate) return false;
+
+  return true;
+});
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-      
-        <Button variant="navy" size="md" className="flex items-center gap-2" onClick={() => navigate("/create-invoice")}>
-          <FiPlus size={16} /> Create Invoice
-        </Button>
-      </div>
+    <div className="flex items-center justify-between">
+  <Button variant="navy" size="md" className="flex items-center gap-2" onClick={() => navigate("/create-invoice")}>
+    <FiPlus size={16} /> Create Invoice
+  </Button>
 
+  <div style={{
+    background: "#f8fafc",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    padding: "10px 16px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+  }}>
+    <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em", color: "#6b7280", textTransform: "uppercase" }}>
+      Date range
+    </span>
+    <div style={{ width: "1px", height: "18px", background: "#e5e7eb" }} />
+    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <label style={{ fontSize: "12px", color: "#6b7280" }}>From</label>
+      <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+        style={{ fontSize: "12px", padding: "5px 8px", border: "1px solid #e5e7eb", borderRadius: "8px", background: "#fff", color: "#111827", outline: "none" }} />
+    </div>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <label style={{ fontSize: "12px", color: "#6b7280" }}>To</label>
+      <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+        style={{ fontSize: "12px", padding: "5px 8px", border: "1px solid #e5e7eb", borderRadius: "8px", background: "#fff", color: "#111827", outline: "none" }} />
+    </div>
+    {(fromDate || toDate) && (
+      <button onClick={() => { setFromDate(""); setToDate(""); }}
+        style={{ fontSize: "12px", padding: "5px 12px", border: "1px solid #e5e7eb", borderRadius: "8px", background: "transparent", color: "#6b7280", cursor: "pointer" }}>
+        Clear
+      </button>
+    )}
+  </div>
+</div>
       <Table
         columns={columns}
-        data={invoices}
+     data={filteredInvoices}
         searchPlaceholder="Search invoices..."
         onRowClick={(row) => navigate(`/invoice/${row.id}`)}
         onDelete={handleDelete}

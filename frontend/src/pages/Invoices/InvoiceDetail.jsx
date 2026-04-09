@@ -2187,12 +2187,18 @@ const totalDiscount = items.reduce((sum, item) => {
               <MetaRow label="Place of Supply" value={`${invoice.ship_state} (${invoice.ship_state_code})`} />
 
               {/* ── E-Way Bill No. ── */}
-              {invoice?.eway_bill_no && (
-                <>
-                  <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
-                  <MetaRow label="E-Way Bill No." value={invoice.eway_bill_no} />
-                </>
-              )}
+          {invoice?.eway_bill_no && (
+  <>
+    <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
+
+    <MetaRow label="E-Way Bill No." value={invoice.eway_bill_no} />
+    <MetaRow label="E-Way Date" value={formatDate(invoice.eway_bill_date)} />
+    <MetaRow label="Valid Upto" value={formatDate(invoice.eway_valid_upto)} />
+    <MetaRow label="Transport Mode" value={invoice.transport_mode} />
+    <MetaRow label="Vehicle No." value={invoice.vehicle_no} />
+    <MetaRow label="Transporter" value={invoice.transporter_name} />
+  </>
+)}
             </div>
           </div>
 
