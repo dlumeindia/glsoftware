@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import CustomerModal from "../../components/CustomerModal";
+
 
 const indiancustomer_states = [
   { code: "01", name: "Jammu & Kashmir" },
@@ -185,7 +187,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
       {title}
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
-      <Field label={customerType === "B2B" ? "Company / Name" : "Customer Name"} required={fieldRules.company_name}>
+      <Field label={customerType === "B2B" ? "Company / Name" : "Company Name"} required={fieldRules.company_name}>
         <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)}/>
       </Field>
       <Field label="Email" required={fieldRules.customer_email} hint={!fieldRules.customer_email ? "optional" : undefined}>
@@ -250,7 +252,7 @@ export default function CreateInvoice() {
   const [from, setFrom] =useState("");
   const [deliveryMode, setDeliveryMode] =useState("1");
   const [approximateDistance, setApproximateDistance] =useState("");
-
+const [customerModal, setCustomerModal] = useState(false);
   // const [customers] =useState([
   //   { id: 1, company_name: "ABC Industries Pvt Ltd", gstin: "27ABCDE1234F1Z5", customer_address_line1: "101 Industrial Zone", customer_address_line2: "", customer_city: "Mumbai", customer_state: "Maharashtra", customer_state_code: "27", customer_pincode: "400001", customer_email: "abc@example.com", customer_phone: "9876543210", customer_pan: "ABCDE1234F", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
   //   { id: 2, company_name: "XYZ Traders", gstin: "27PQRSX5678L1Z2", customer_address_line1: "45 Trade Center", customer_address_line2: "Sector 5", customer_city: "Pune", customer_state: "Maharashtra", customer_state_code: "27", customer_pincode: "411001", customer_email: "xyz@traders.com", customer_phone: "9123456789", customer_pan: "", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
@@ -394,21 +396,49 @@ export default function CreateInvoice() {
   const [items, setItems] =useState([
     { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 },
   ]);
-  const updateItem = (i, f, v) => { const u = [...items]; u[i][f] = v; setItems(u); };
+const updateItem = (i, field, value) => {
+  setItems((prev) =>
+    prev.map((item, index) =>
+      index === i ? { ...item, [field]: value } : item
+    )
+  );
+};
   const addItem = () => setItems([...items, { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 }]);
   const removeItem = (i) => items.length > 1 && setItems(items.filter((_, idx) => idx !== i));
 
-  const itemTaxable = (item) => { const gross = item.qty * item.rate; const discAmt = item.discount > 0 ? (gross * item.discount) / 100 : 0; return gross - discAmt; };
-  const itemTax = (item) => (itemTaxable(item) * item.gstRate) / 100;
+const itemTaxable = (item) => {
+  const qty = Number(item.qty) || 0;
+  const rate = Number(item.rate) || 0;
+  const discount = Number(item.discount) || 0;
+
+  const gross = qty * rate;
+  const discAmt = discount > 0 ? (gross * discount) / 100 : 0;
+
+  return gross - discAmt;
+};
+const itemTax = (item) => {
+  const gst = Number(item.gstRate) || 0;
+  return (itemTaxable(item) * gst) / 100;
+};
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
 
-  const subtotal = items.reduce((s, item) => s + item.qty * item.rate, 0);
-  const totalDiscount = items.reduce((s, item) => s + (item.qty * item.rate * item.discount) / 100, 0);
+const subtotal = items.reduce((s, item) => {
+  const qty = Number(item.qty) || 0;
+  const rate = Number(item.rate) || 0;
+  return s + qty * rate;
+}, 0);
+
+const totalDiscount = items.reduce((s, item) => {
+  const qty = Number(item.qty) || 0;
+  const rate = Number(item.rate) || 0;
+  const discount = Number(item.discount) || 0;
+  return s + (qty * rate * discount) / 100;
+}, 0);
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount;
   const BUSINESS_customer_state_CODE = businessInfo.customer_state_code;
   const placeOfSupplyCode = sameAsBilling ? billForm.customer_state_code : shipForm.customer_state_code;
-  const isInter = placeOfSupplyCode === BUSINESS_customer_state_CODE;
+ const isInter = placeOfSupplyCode !== BUSINESS_customer_state_CODE;
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
@@ -509,10 +539,26 @@ export default function CreateInvoice() {
                       ))}
                     </div>
                     <div style={{ padding: "10px 14px", borderTop: "1.5px solid #e5e7eb" }}>
-                      <button onClick={() => { setBillForm({ ...emptyAddress }); setSelectedCustomer(null); setCustomerType("B2C"); setShowCustDropdown(false); }}
-                        style={{ background: "none", border: "none", color: "#3b82f6", fontSize: "13px", fontWeight: 600, cursor: "pointer", padding: 0 }}>
-                        + Add New Customer
-                      </button>
+                   <button
+ onClick={() => {
+  setShowCustDropdown(false);
+
+
+  setTimeout(() => {
+    setCustomerModal(true);
+  }, 100);
+}}
+  style={{
+    background: "none",
+    border: "none",
+    color: "#3b82f6",
+    fontSize: "13px",
+    fontWeight: 600,
+    cursor: "pointer",
+  }}
+>
+  + Add New Customer
+</button>
                     </div>
                   </div>
                 )}
@@ -549,9 +595,7 @@ export default function CreateInvoice() {
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
-                <Field label="Company / Name">
-                  <TextInput value={shipForm.company_name} onChange={(e) => updateShipForm("company_name", e.target.value)} placeholder="Company Name" />
-                </Field>
+              
                 <Field label="Address Line 1">
                   <TextInput value={shipForm.customer_address_line1} onChange={(e) => updateShipForm("customer_address_line1", e.target.value)} placeholder="Building, Street" />
                 </Field>
@@ -664,13 +708,19 @@ export default function CreateInvoice() {
                     </select>
                   </td>
                   <td style={{ padding: "5px 6px", width: "65px" }}>
-                    <input type="number" value={item.qty} min={1} onChange={(e) => updateItem(i, "qty", Number(e.target.value))} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />
+                  <input type="number" value={item.qty || ""}onChange={(e) =>
+  updateItem(i, "qty", e.target.value === "" ? "" : Number(e.target.value))
+}style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "100px" }}>
-                    <input type="number" value={item.rate} onChange={(e) => updateItem(i, "rate", Number(e.target.value))} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "right" }} />
+                    <input type="number" value={item.rate}onChange={(e) =>
+  updateItem(i, "rate", e.target.value === "" ? "" : Number(e.target.value))
+} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "right" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "65px" }}>
-                    <input type="number" value={item.discount} min={0} max={100} onChange={(e) => updateItem(i, "discount", Number(e.target.value))} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />
+                    <input type="number" value={item.discount} min={0} max={100} onChange={(e) =>
+  updateItem(i, "discount", e.target.value === "" ? "" : Number(e.target.value))
+} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />
                   </td>
                   <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>
                     ₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -800,6 +850,35 @@ export default function CreateInvoice() {
         <button style={{ padding: "11px 28px", border: "1.5px solid #d1d5db", borderRadius: "8px", background: "#fff", fontSize: "13.5px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Cancel</button>
         <button  onClick={handleSaveInvoice} style={{ padding: "11px 28px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13.5px", fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.3px" }}>💾 Save Invoice</button>
       </div>
+
+
+{customerModal && (
+  <CustomerModal
+    onClose={() => setCustomerModal(false)}
+   onCustomerCreated={(newCustomer) => {
+  setCustomerModal(false);
+
+  // ✅ ADD IMMEDIATELY TO LIST (IMPORTANT FIX)
+  setCustomers((prev) => [newCustomer, ...prev]);
+
+  // optional (can keep)
+  loadCustomers();
+
+  // ✅ auto select
+  setSelectedCustomer(newCustomer);
+  setBillForm({ ...newCustomer });
+  setCustomerID(newCustomer.id);
+
+  setCustomerType(
+    newCustomer.customer_gstin &&
+    newCustomer.customer_gstin.trim().length === 15
+      ? "B2B"
+      : "B2C"
+  );
+}}
+  />
+)}
+
     </div>
   );
 }

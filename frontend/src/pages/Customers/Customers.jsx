@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 const indianStates = [
   { code: "01", name: "Jammu & Kashmir" }, { code: "02", name: "Himachal Pradesh" },
   { code: "03", name: "Punjab" }, { code: "04", name: "Chandigarh" },
@@ -167,7 +167,7 @@ function ErrorMsg({ field, errors }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function Customers() {
+export default function Customers({ onSuccess }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -235,15 +235,26 @@ const handleSave = async () => {
 
  
 
-    await window.electronAPI.saveCustomer(payload);
+const res = await window.electronAPI.saveCustomer(payload);
 
-    // ✅ SUCCESS ALERT
-    alert("✅ Customer saved successfully!");
+// ✅ get full saved customer
+const newCustomer = res?.data || {
+  ...payload,
+  id: res?.insertId || Date.now(),
+};
 
-    // ✅ RESET FORM
-    setForm(emptyForm);
-    setErrors({});
-    setSubmitted(true);
+// ✅ SUCCESS
+alert("✅ Customer saved successfully!");
+
+// 🔥 SEND DATA BACK TO MODAL
+if (onSuccess) {
+onSuccess(newCustomer);
+}
+
+// OPTIONAL (won’t matter because modal will close)
+setForm(emptyForm);
+setErrors({});
+setSubmitted(true);
 
   } catch (err) {
     console.error(err);
