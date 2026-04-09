@@ -357,7 +357,7 @@ export default function DeliveryChallan() {
                 Terms & Conditions
               </div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.8", whiteSpace: "pre-line" }}>
-                {challan.termsAndConditions}
+                 {profile?.terms || "1. Payment due within 30 days.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction."}
               </div>
 
               <div style={{ marginTop: "28px" }}>
@@ -379,9 +379,9 @@ export default function DeliveryChallan() {
             <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
-                  For {businessInfo.name}
+                  For {profile?.business_name}
                 </div>
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>GSTIN: {businessInfo.gst}</div>
+                <div style={{ fontSize: "11px", color: "#6b7280" }}>GSTIN: {profile?.gstin}</div>
               </div>
               <div style={{ textAlign: "center" }}>
                 <div style={{ height: "60px", borderBottom: "1px solid #d1d5db", marginBottom: "6px" }} />

@@ -1861,6 +1861,117 @@ export default function InvoiceDetail() {
     setTimeout(() => setToast(false), 3000);
   };
 
+    const handleDelivery = async () => {
+  try {
+
+      if (invoice?.challan === 1) {
+      navigate(`/delivery-challan/${id}`);
+      return;
+    }
+    const payload = {
+      invoice_id: id,
+      challanNo: `CHL-${Date.now()}`,
+      challanDate: new Date().toISOString().split("T")[0],
+      againstInvoiceNo: invoice.invoice_no,
+      transportMode: invoice.transport_mode,
+      vehicleNo: invoice.vehicle_no,
+      placeOfSupply: invoice.ship_state,
+      placeOfSupplyCode: invoice.ship_state_code,
+      termsAndConditions: "",
+    };
+
+    const res = await window.electronAPI.deliveryChallan(payload );
+
+    if (res.success) {
+      alert("✅ Delivery Challan Created");
+
+      // redirect to view page
+      navigate(`/delivery-challan/${res.id}`);
+    } else {
+      alert("❌ Failed to create challan");
+    }
+  } catch (error) {
+    alert("Something went wrong");
+  }
+};
+
+ const handleDownloadPDF = async () => {
+    const element = document.querySelector(".print-area");
+
+    if (!element) return;
+
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { margin:0; font-family: Arial; }
+              @page { size: A4; margin: 10mm; }
+            </style>
+          </head>
+          <body>
+            ${element.outerHTML}
+          </body>
+        </html>
+      `;
+
+    await window.electronAPI.generatePDF( {fileext: 'Invoice',
+      html: html,});
+    //  const res = await window.electronAPI.downloadPDF();
+  };
+
+  const handleShare = async () => {
+  try {
+     const element = document.querySelector(".print-area");
+
+    if (!element) return;
+
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { margin:0; font-family: Arial; }
+              @page { size: A4; margin: 10mm; }
+            </style>
+          </head>
+          <body>
+            ${element.outerHTML}
+          </body>
+        </html>
+      `;
+
+    const res = await window.electronAPI.generateAutoPDF( {fileext: 'Invoice',
+      html: html,});
+
+    if (res?.success) {
+      await window.electronAPI.sharePDF(res.filePath);
+    }
+  } catch (err) {
+    console.log( err);
+  }
+};
+
+ const handlePrint = async () => {
+    const element = document.querySelector(".print-area");
+
+      if (!element) return;
+
+        const html = `
+          <html>
+            <head>
+              <style>
+                body { margin:0; font-family: Arial; }
+                @page { size: A4; margin: 10mm; }
+              </style>
+            </head>
+            <body>
+              ${element.outerHTML}
+            </body>
+          </html>
+        `;
+
+      await window.electronAPI.printPDF(html);
+  };
+
   // ── Edit mode: render edit form ──
   if (mode === "edit") {
     return <EditInvoiceForm invoice={invoice} profile={profile} items={items} onSave={handleSave} onCancel={() => setMode("view")} />;
@@ -1948,19 +2059,19 @@ const totalDiscount = items.reduce((sum, item) => {
             <StatusBadge status={invoice.status} />
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button type="button" onClick={() => navigate(`/delivery-challan/`)}
+            <button type="button" onClick={handleDelivery}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #d1fae5", borderRadius: "8px", background: "#ecfdf5", fontSize: "13px", fontWeight: 700, color: "#065f46", cursor: "pointer" }}>
-              <FiFileText size={15} /> Create Challan
+              <FiFileText size={15} /> {invoice?.challan === 1 ? "View Challan" : "Create Challan"}
             </button>
-            <button type="button" 
+            <button type="button" onClick={handleDownloadPDF}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e0e7ff", borderRadius: "8px", background: "#eef2ff", fontSize: "13px", fontWeight: 700, color: "#3730a3", cursor: "pointer" }}>
               <FiDownload size={15} /> Download PDF
             </button>
-            <button type="button" 
+            <button type="button" onClick={handlePrint}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "13px", fontWeight: 700, color: "#374151", cursor: "pointer" }}>
               <FiPrinter size={15} /> Print
             </button>
-            <button type="button" 
+            <button type="button" onClick={handleShare}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13px", fontWeight: 700, color: "#fff", cursor: "pointer" }}>
               <FiShare2 size={15} /> Share
             </button>
@@ -2276,15 +2387,15 @@ const totalDiscount = items.reduce((sum, item) => {
                 Terms & Conditions
               </div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.8", whiteSpace: "pre-line" }}>
-                {invoice.termsAndConditions || "1. Payment due within 30 days.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction."}
+               {profile?.terms || "1. Payment due within 30 days.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction."}
               </div>
             </div>
             <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
-                  For {businessInfo.name}
+                  For {profile?.business_name}
                 </div>
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>GSTIN: {businessInfo.gst}</div>
+                <div style={{ fontSize: "11px", color: "#6b7280" }}>GSTIN: {profile?.gst}</div>
               </div>
               <div style={{ textAlign: "center" }}>
                 <div style={{ height: "60px", borderBottom: "1px solid #d1d5db", marginBottom: "6px" }} />

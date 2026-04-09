@@ -18,6 +18,7 @@ db.prepare(`
   user_id INTEGER,
 
   business_name TEXT,
+  customer_name TEXT,
   business_type TEXT,
   pan TEXT,
   gstin TEXT,
@@ -193,7 +194,7 @@ db.prepare(`
   
 
 // db.prepare(`
-//   ALTER TABLE customers ADD COLUMN same_as_billing INTEGER DEFAULT 0
+//   ALTER TABLE business_profile ADD COLUMN customer_name TEXT
 // `).run();
 
 // db.prepare(`
