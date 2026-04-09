@@ -1030,17 +1030,38 @@ ipcMain.handle("dashboard:get-stats", async () => {
   };
 });
 
+// ipcMain.handle("dashboard:get-recent-invoices", async () => {
+//   const invoices = db
+//     .prepare(`
+//       SELECT 
+//         id,
+//         invoice_no as number,
+//         bill_company_name as client,
+//         bill_company_name as company_name,
+//         grand_total as amount,
+//         status
+//       FROM invoices
+//       ORDER BY id DESC
+//       LIMIT 5
+//     `)
+//     .all();
+
+//   return invoices;
+// });
+
 ipcMain.handle("dashboard:get-recent-invoices", async () => {
   const invoices = db
     .prepare(`
       SELECT 
-        id,
-        invoice_no as number,
-        bill_company_name as client,
-        grand_total as amount,
-        status
-      FROM invoices
-      ORDER BY id DESC
+        i.id,
+        i.invoice_no as number,
+        c.customer_name as client,
+        c.company_name as company_name,
+        i.grand_total as amount,
+        i.status
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      ORDER BY i.id DESC
       LIMIT 5
     `)
     .all();

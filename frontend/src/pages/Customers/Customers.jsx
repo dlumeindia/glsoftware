@@ -171,6 +171,8 @@ export default function Customers({ onSuccess }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  
+  const navigate = useNavigate();
 
   const update = (field, val) => {
     if (field === "customer_state") {
@@ -444,7 +446,7 @@ setSubmitted(true);
       {/* Footer Actions */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingBottom: "40px" }}>
     
-        <button type="button"
+        <button type="button" onClick={() => navigate("/customer-list")}
           style={{ padding: "11px 28px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#f8fafc", fontSize: "13.5px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>
           Cancel
         </button>

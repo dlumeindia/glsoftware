@@ -28,7 +28,7 @@ const columns = [
     key: "company_name",
     label: "Company",
     render: (value) => (
-      <div className="text-gray-600 text-sm">{value || "—"}</div>
+      <div className="font-medium text-gray-800">{value || "—"}</div>
     ),
   },
   {
