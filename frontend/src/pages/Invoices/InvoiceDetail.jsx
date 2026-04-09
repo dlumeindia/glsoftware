@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FiPrinter, FiShare2, FiArrowLeft, FiFileText, FiDownload } from "react-icons/fi";
@@ -103,19 +103,34 @@ const InvoiceTypeOptions = ["Tax Invoice", "Debit Note", "Credit Note"];
 const units = ["NOS", "PCS", "KG", "MTR", "LTR", "SET", "BOX", "ROLL", "PAIR"];
 
 const numberToWords = (num) => {
-  if (num === 0) return "Zero";
+  if (!num || isNaN(num)) return "Zero";
+
+  num = Math.floor(num);
+
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+    "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
   const convert = (n) => {
+    if (n === 0) return "";
     if (n < 20) return ones[n];
     if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
     if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + convert(n % 100) : "");
     if (n < 100000) return convert(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + convert(n % 1000) : "");
     if (n < 10000000) return convert(Math.floor(n / 100000)) + " Lakh" + (n % 100000 ? " " + convert(n % 100000) : "");
-    return convert(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 ? " " + convert(n % 10000000) : "");
+    
+    // ✅ HARD STOP to prevent infinite recursion
+    if (n >= 10000000) {
+      return convert(Math.floor(n / 10000000)) + " Crore" +
+        (n % 10000000 ? " " + convert(n % 10000000) : "");
+    }
+
+    return "";
   };
-  return convert(Math.round(num));
+
+  return convert(num).trim();
 };
 
 const formatDate = (d) => {
@@ -242,44 +257,102 @@ const AddressBlock = ({ form, update, title, grid3 }) => (    <div>
 // ─── Edit Invoice Form ──────────────────────────────────────────────────────
 function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
   const emptyAddress = {
-    company_name: "", gstin: "", pan: "", address_line1: "", address_line2: "",
-    city: "", state: "", state_code: "", pincode: "", email: "", phone: "",
-    place_of_supply: "", place_of_supply_code: "",
+    company_name: "",
+    gstin: "",
+    pan: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state: "",
+    state_code: "",
+    pincode: "",
+    email: "",
+    phone: "",
+    place_of_supply: "",
+    place_of_supply_code: "",
   };
 
+  const billAddress = {
+    company_name: invoice.bill_company_name,
+    gstin: invoice.bill_gstin,
+    pan: invoice.bill_pan,
+    address_line1: invoice.bill_address_line1,
+    address_line2: invoice.bill_address_line2,
+    city: invoice.bill_city,
+    state: invoice.bill_state,
+    state_code: invoice.bill_state_code,
+    pincode: invoice.bill_pincode,
+    email: invoice.bill_email,
+    phone: invoice.bill_phone,
+  };
+
+  const shipAddress = {
+    company_name: invoice.ship_company_name,
+    gstin: invoice.ship_gstin,
+    pan: invoice.ship_pan,
+    address_line1: invoice.ship_address_line1,
+    address_line2: invoice.ship_address_line2,
+    city: invoice.ship_city,
+    state: invoice.ship_state,
+    state_code: invoice.ship_state_code,
+    pincode: invoice.ship_pincode,
+  };
 
   const gstOptions = [0, 5, 12, 18, 28];
-  
+
   const [invoiceNo, setInvoiceNo] = useState(invoice.invoice_no);
   const [itemsState, setItems] = useState(items || []);
   const [invoiceDate, setInvoiceDate] = useState(invoice.invoice_date);
-  const [invoiceType, setInvoiceType] = useState(invoice.invoice_type || "Tax Invoice");
+  const [invoiceType, setInvoiceType] = useState(
+    invoice.invoice_type || "Tax Invoice",
+  );
   const [supplyType, setSupplyType] = useState(invoice.supply_type);
-  const [subSupplyType, setSubSupplyType] = useState(invoice.sub_supply_type || "");
-  const [revCharge, setRevCharge] = useState(invoice.reverse_charge?.toLowerCase() === "yes" ? "yes" : "no");
+  const [subSupplyType, setSubSupplyType] = useState(
+    invoice.sub_supply_type || "",
+  );
+  const [revCharge, setRevCharge] = useState(
+    invoice.reverse_charge?.toLowerCase() === "yes" ? "yes" : "no",
+  );
 
-  const [ewayEnabled, setEwayEnabled] = useState(!!(invoice.eway_enable));
+  const [ewayEnabled, setEwayEnabled] = useState(!!invoice.eway_enable);
   const [docType, setDocType] = useState(invoice.doc_type || "INV");
-  const [approximateDistance, setApproximateDistance] = useState(invoice.distance || "");
-  const [transporterName, setTransporterName] = useState(invoice.transporter_name || "");
-  const [transporterDocNo, setTransporterDocNo] = useState(invoice.transporter_doc|| "");
+  const [approximateDistance, setApproximateDistance] = useState(
+    invoice.distance || "",
+  );
+  const [transporterName, setTransporterName] = useState(
+    invoice.transporter_name || "",
+  );
+  const [transporterDocNo, setTransporterDocNo] = useState(
+    invoice.transporter_doc || "",
+  );
   const [vehicleNo, setVehicleNo] = useState(invoice.vehicle_no || "");
   const [from, setFrom] = useState(invoice.from || "");
-  const [deliveryMode, setDeliveryMode] = useState(invoice.delivery_mode || "1");
+  const [deliveryMode, setDeliveryMode] = useState(
+    invoice.delivery_mode || "1",
+  );
 
   const [billForm, setBillForm] = useState({ ...emptyAddress, ...billAddress });
-  
+
   const [sameAsBilling, setSameAsBilling] = useState(invoice.same_as_billing);
-  const [shipForm, setShipForm] = useState({ ...emptyAddress, ...shipAddress});
+  const [shipForm, setShipForm] = useState({ ...emptyAddress, ...shipAddress });
 
   const [pfCharge, setPfCharge] = useState(invoice.pfCharge || 0);
-  const [termsAndConditions, setTermsAndConditions] = useState(invoice.termsAndConditions || "");
+  const [termsAndConditions, setTermsAndConditions] = useState("");
 
   const updateBillForm = (field, val) => {
     if (field === "state") {
       const st = indianStates.find((s) => s.name === val);
-      setBillForm((f) => ({ ...f, state: val, state_code: st ? st.code : f.state_code }));
-      if (sameAsBilling) setShipForm((f) => ({ ...f, state: val, state_code: st ? st.code : f.state_code }));
+      setBillForm((f) => ({
+        ...f,
+        state: val,
+        state_code: st ? st.code : f.state_code,
+      }));
+      if (sameAsBilling)
+        setShipForm((f) => ({
+          ...f,
+          state: val,
+          state_code: st ? st.code : f.state_code,
+        }));
     } else {
       setBillForm((f) => ({ ...f, [field]: val }));
       if (sameAsBilling) setShipForm((f) => ({ ...f, [field]: val }));
@@ -289,7 +362,11 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
   const updateShipForm = (field, val) => {
     if (field === "state") {
       const st = indianStates.find((s) => s.name === val);
-      setShipForm((f) => ({ ...f, state: val, state_code: st ? st.code : f.state_code }));
+      setShipForm((f) => ({
+        ...f,
+        state: val,
+        state_code: st ? st.code : f.state_code,
+      }));
     } else {
       setShipForm((f) => ({ ...f, [field]: val }));
     }
@@ -300,16 +377,42 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     if (checked) setShipForm({ ...billForm });
   };
 
-  const updateItem = (i, f, v) => { const u = [...items]; u[i][f] = v; setItems(u); };
-  const addItem = () => setItems([...items, { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 }]);
-  const removeItem = (i) => items.length > 1 && setItems(items.filter((_, idx) => idx !== i));
+  const updateItem = (index, field, value) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+  const addItem = () =>
+    setItems([
+      ...items,
+      {
+        description: "",
+        itemCode: "",
+        hsn: "",
+        qty: 1,
+        rate: 0,
+        discount: 0,
+        unit: "NOS",
+        gst_rate: 18,
+      },
+    ]);
+  const removeItem = (i) =>
+    items.length > 1 && setItems(items.filter((_, idx) => idx !== i));
 
-  const itemTaxable = (item) => { const g = item.qty * item.rate; return g - (g * (item.discount || 0)) / 100; };
-  const itemTax = (item) => (itemTaxable(item) * item.gstRate) / 100;
+  const itemTaxable = (item) => {
+    const g = item.qty * item.rate;
+    return g - (g * (item.discount || 0)) / 100;
+  };
+  const itemTax = (item) => (itemTaxable(item) * item.gst_rate) / 100;
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
 
   const subtotal = items.reduce((s, item) => s + item.qty * item.rate, 0);
-  const totalDiscount = items.reduce((s, item) => s + (item.qty * item.rate * (item.discount || 0)) / 100, 0);
+  const totalDiscount = items.reduce(
+    (s, item) => s + (item.qty * item.rate * (item.discount || 0)) / 100,
+    0,
+  );
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount + Number(pfCharge);
   const isInter = supplyType === "interstate";
@@ -323,129 +426,273 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
 
   const taxSummary = items.reduce((acc, item) => {
     const key = item.hsn || "N/A";
-    if (!acc[key]) acc[key] = { hsn: key, taxable: 0, cgstAmt: 0, sgstAmt: 0, igstAmt: 0, rate: item.gstRate };
+    if (!acc[key])
+      acc[key] = {
+        hsn: key,
+        taxable: 0,
+        cgstAmt: 0,
+        sgstAmt: 0,
+        igstAmt: 0,
+        rate: item.gst_rate,
+      };
     acc[key].taxable += itemTaxable(item);
     const tax = itemTax(item);
     if (isInter) acc[key].igstAmt += tax;
-    else { acc[key].cgstAmt += tax / 2; acc[key].sgstAmt += tax / 2; }
+    else {
+      acc[key].cgstAmt += tax / 2;
+      acc[key].sgstAmt += tax / 2;
+    }
     return acc;
   }, {});
 
-  const handleSave = () => {
-    onSave({
-      ...invoice,
-      invoiceNo, invoiceDate, invoiceType, supplyType, subSupplyType, revCharge,
-      customer: billForm,
-      shipping: sameAsBilling ? billForm : shipForm,
-      itemsState, pfCharge, termsAndConditions,
-      ewayBill: ewayEnabled ? { ...invoice.ewayBill, docType, approximateDistance, transporterName, transporterDocNo, vehicleNo, from, deliveryMode } : null,
-    });
+  // const handleSave = () => {
+  //   onSave({
+  //     ...invoice,
+  //     invoiceNo, invoiceDate, invoiceType, supplyType, subSupplyType, revCharge,
+  //     customer: billForm,
+  //     shipping: sameAsBilling ? billForm : shipForm,
+  //     itemsState, pfCharge, termsAndConditions,
+  //     ewayBill: ewayEnabled ? { ...invoice.ewayBill, docType, approximateDistance, transporterName, transporterDocNo, vehicleNo, from, deliveryMode } : null,
+  //   });
+  // };
+
+  const handleSave = async () => {
+    try {
+      const data = {
+        invoiceNo,
+        invoiceDate,
+        invoiceType,
+        supplyType,
+        subSupplyType,
+        revCharge,
+
+        billForm,
+        shipForm,
+        sameAsBilling,
+
+        items,
+
+        subtotal,
+        totalDiscount,
+        taxableAmount,
+        cgst,
+        sgst,
+        igst,
+        roundOff,
+        grandTotal,
+
+        ewayEnabled,
+        docType,
+        approximateDistance,
+        transporterName,
+        transporterDocNo,
+        vehicleNo,
+        deliveryMode,
+        from,
+        invoice,
+      };
+
+      console.log("📤 Sending to backend:", data);
+
+      const res = await window.electronAPI.updateInvoice(data);
+
+      if (res?.success) {
+        alert(`✅ Invoice Saved (ID: ${res.invoiceId})`);
+        onSave({
+          ...invoice,
+          invoiceNo,
+          invoiceDate,
+          invoiceType,
+          supplyType,
+          subSupplyType,
+          revCharge,
+          customer: billForm,
+          shipping: sameAsBilling ? billForm : shipForm,
+          itemsState,
+          pfCharge,
+          termsAndConditions,
+          ewayBill: ewayEnabled
+            ? {
+                ...invoice.ewayBill,
+                docType,
+                approximateDistance,
+                transporterName,
+                transporterDocNo,
+                vehicleNo,
+                from,
+                deliveryMode,
+              }
+            : null,
+        });
+
+        // Optional: Reset form
+        // resetForm();
+      } else {
+        alert("❌ Failed to save invoice");
+      }
+    } catch (error) {
+      alert(error);
+    }
   };
 
-    // const handleSave = async () => {
-    //   try {
-    //     const data = {
-    //       invoiceNo,
-    //       invoiceDate,
-    //       invoiceType,
-    //       supplyType,
-    //       subSupplyType,
-    //       revCharge,
-
-    //       billForm,
-    //       shipForm,
-    //       sameAsBilling,
-
-    //       items,
-
-    //       subtotal,
-    //       totalDiscount,
-    //       taxableAmount,
-    //       cgst,
-    //       sgst,
-    //       igst,
-    //       roundOff,
-    //       grandTotal,
-
-    //       ewayEnabled,
-    //       docType,
-    //       approximateDistance,
-    //       transporterName,
-    //       transporterDocNo,
-    //       vehicleNo,
-    //       deliveryMode,
-    //       from,
-    //       invoice,
-    //     };
-
-    //     console.log("📤 Sending to backend:", data);
-
-    //     const res = await window.electronAPI.updateInvoice(data);
-
-    //     if (res?.success) {
-    //       alert(`✅ Invoice Saved (ID: ${res.invoiceId})`);
-    //       onSave({
-    //         ...invoice,
-    //         invoiceNo, invoiceDate, invoiceType, supplyType, subSupplyType, revCharge,
-    //         customer: billForm,
-    //         shipping: sameAsBilling ? billForm : shipForm,
-    //         itemsState, pfCharge, termsAndConditions,
-    //         ewayBill: ewayEnabled ? { ...invoice.ewayBill, docType, approximateDistance, transporterName, transporterDocNo, vehicleNo, from, deliveryMode } : null,
-    //       });
-          
-    //       // Optional: Reset form
-    //       // resetForm();
-    //     } else {
-    //       alert("❌ Failed to save invoice");
-    //     }
-
-    //   } catch (error) {
-    //     alert(error);
-    //   }
-    // };
-
- 
-
-  
-
-  const grid3 = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" };
-  const grid2 = { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" };
-
-
+  const grid3 = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "16px",
+  };
+  const grid2 = {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "16px",
+  };
 
   return (
     <div style={{ width: "100%", margin: "0" }}>
       {/* Top Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <button type="button" onClick={onCancel}
-            style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "13px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 14px",
+              border: "1.5px solid #e5e7eb",
+              borderRadius: "8px",
+              background: "#fff",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#374151",
+              cursor: "pointer",
+            }}
+          >
             <FiArrowLeft size={15} /> Back
           </button>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Edit Invoice</h1>
-              <span style={{ padding: "4px 10px", background: "#fef3c7", border: "1.5px solid #fde68a", borderRadius: "20px", fontSize: "11.5px", fontWeight: 700, color: "#92400e" }}>
-                ✏️ Editing {invoice.invoiceNo}
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "22px",
+                  fontWeight: 800,
+                  color: "#0b1324",
+                }}
+              >
+                Edit Invoice
+              </h1>
+              <span
+                style={{
+                  padding: "4px 10px",
+                  background: "#fef3c7",
+                  border: "1.5px solid #fde68a",
+                  borderRadius: "20px",
+                  fontSize: "11.5px",
+                  fontWeight: 700,
+                  color: "#92400e",
+                }}
+              >
+                ✏️ Editing {invoice.invoice_no}
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>Pre-filled with saved data · Make your changes below</p>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "12.5px",
+                color: "#6b7280",
+                marginTop: "2px",
+              }}
+            >
+              Pre-filled with saved data · Make your changes below
+            </p>
           </div>
         </div>
       </div>
 
       {/* Company Banner */}
-       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+      <div
+        style={{
+          background: "#1e3a5f",
+          borderRadius: "12px",
+          padding: "20px 24px",
+          marginBottom: "20px",
+          color: "#fff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
           <div>
-            <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer state Code : {profile?.state_code}</div>
-            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{profile?.email} · {profile?.phone}</div>
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 800,
+                letterSpacing: "0.5px",
+                marginBottom: "4px",
+              }}
+            >
+              {profile?.business_name}
+            </div>
+            <div
+              style={{
+                fontSize: "12px",
+                opacity: 0.8,
+                maxWidth: "420px",
+                lineHeight: "1.5",
+              }}
+            >
+              {profile?.address_line1}, {profile?.address_line2},{" "}
+              {profile?.city} - {profile?.pincode}
+            </div>
+            <div
+              style={{
+                fontSize: "12px",
+                opacity: 0.8,
+                maxWidth: "420px",
+                lineHeight: "1.5",
+              }}
+            >
+              customer state Code : {profile?.state_code}
+            </div>
+            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>
+              {profile?.email} · {profile?.phone}
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px", letterSpacing: "0.05em" }}>GSTIN</div>
-            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{profile?.gstin}</div>
+            <div
+              style={{
+                fontSize: "11px",
+                opacity: 0.7,
+                marginBottom: "2px",
+                letterSpacing: "0.05em",
+              }}
+            >
+              GSTIN
+            </div>
+            <div
+              style={{
+                fontSize: "13.5px",
+                fontWeight: 700,
+                fontFamily: "monospace",
+                letterSpacing: "1px",
+              }}
+            >
+              {profile?.gstin}
+            </div>
           </div>
         </div>
       </div>
@@ -453,23 +700,62 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
       {/* Invoice Details */}
       <ESection title="Invoice Details" icon="🧾">
         <div style={grid3}>
-          <EField label="Invoice No" required><ETextInput value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="INV-2526-001" /></EField>
-          <EField label="Invoice Date" required><ETextInput type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} /></EField>
+          <EField label="Invoice No" required>
+            <ETextInput
+              value={invoiceNo}
+              onChange={(e) => setInvoiceNo(e.target.value)}
+              placeholder="INV-2526-001"
+            />
+          </EField>
+          <EField label="Invoice Date" required>
+            <ETextInput
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+            />
+          </EField>
           <EField label="Invoice Type">
-            <ESelectInput value={invoiceType} onChange={(e) => setInvoiceType(e.target.value)} options={InvoiceTypeOptions.map((p) => ({ value: p, label: p }))} />
+            <ESelectInput
+              value={invoiceType}
+              onChange={(e) => setInvoiceType(e.target.value)}
+              options={InvoiceTypeOptions.map((p) => ({ value: p, label: p }))}
+            />
           </EField>
           <EField label="SupplyType" required>
-            <ESelectInput value={supplyType} onChange={(e) => setSupplyType(e.target.value)} options={[{ value: "Outward", label: "Outward" }, { value: "Inward", label: "Inward" }]} />
+            <ESelectInput
+              value={supplyType}
+              onChange={(e) => setSupplyType(e.target.value)}
+              options={[
+                { value: "Outward", label: "Outward" },
+                { value: "Inward", label: "Inward" },
+              ]}
+            />
           </EField>
           <EField label="Sub Supply Type">
-            <ESelectInput value={subSupplyType} onChange={(e) => setSubSupplyType(e.target.value)} placeholder="Select Type" options={[
-              { value: "Supply", label: "Supply" }, { value: "Import", label: "Import" }, { value: "Export", label: "Export" },
-              { value: "Job Work", label: "Job Work" }, { value: "For Own Use", label: "For Own Use" },
-              { value: "Sales Return", label: "Sales Return" }, { value: "Others", label: "Others" },
-            ]} />
+            <ESelectInput
+              value={subSupplyType}
+              onChange={(e) => setSubSupplyType(e.target.value)}
+              placeholder="Select Type"
+              options={[
+                { value: "Supply", label: "Supply" },
+                { value: "Import", label: "Import" },
+                { value: "Export", label: "Export" },
+                { value: "Job Work", label: "Job Work" },
+                { value: "For Own Use", label: "For Own Use" },
+                { value: "Sales Return", label: "Sales Return" },
+                { value: "Others", label: "Others" },
+              ]}
+            />
           </EField>
           <EField label="Reverse Charge">
-            <ESelectInput value={revCharge} onChange={(e) => setRevCharge(e.target.value)} options={[{ value: "no", label: "No" }, { value: "yes", label: "Yes" }]} />
+            <ESelectInput
+              value={revCharge}
+              onChange={(e) => setRevCharge(e.target.value)}
+              options={[
+                { value: "no", label: "No" },
+                { value: "yes", label: "Yes" },
+              ]}
+            />
           </EField>
         </div>
       </ESection>
@@ -477,35 +763,130 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
       {/* Billing & Shipping */}
       <ESection title="Billing & Shipping Address" icon="🏢">
         <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-<AddressBlock
-  form={billForm}
-  update={updateBillForm}
-  title="📋 Billing Address"
-  grid3={grid3}
-/>          <div style={{ height: "1px", background: "#f0f4f8" }} />
+          <AddressBlock
+            form={billForm}
+            update={updateBillForm}
+            title="📋 Billing Address"
+            grid3={grid3}
+          />{" "}
+          <div style={{ height: "1px", background: "#f0f4f8" }} />
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", paddingBottom: "8px", borderBottom: "1.5px solid #f0f4f8" }}>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#1e3a5f" }}>🚚 Shipping Address</div>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", color: "#6b7280", fontWeight: 600 }}>
-                <input type="checkbox" checked={sameAsBilling} onChange={(e) => handleSameAsBilling(e.target.checked)} style={{ width: "14px", height: "14px", accentColor: "#1e3a5f", cursor: "pointer" }} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "14px",
+                paddingBottom: "8px",
+                borderBottom: "1.5px solid #f0f4f8",
+              }}
+            >
+              <div
+                style={{ fontSize: "13px", fontWeight: 700, color: "#1e3a5f" }}
+              >
+                🚚 Shipping Address
+              </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  color: "#6b7280",
+                  fontWeight: 600,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={sameAsBilling === 1}
+                  onChange={(e) => handleSameAsBilling(e.target.checked)}
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    accentColor: "#1e3a5f",
+                    cursor: "pointer",
+                  }}
+                />
                 Same as Billing
               </label>
             </div>
             {sameAsBilling ? (
-              <div style={{ padding: "20px", background: "#f8fafc", borderRadius: "10px", border: "1.5px dashed #d1d5db", textAlign: "center", color: "#6b7280", fontSize: "13px" }}>
+              <div
+                style={{
+                  padding: "20px",
+                  background: "#f8fafc",
+                  borderRadius: "10px",
+                  border: "1.5px dashed #d1d5db",
+                  textAlign: "center",
+                  color: "#6b7280",
+                  fontSize: "13px",
+                }}
+              >
                 ✓ Shipping address is same as billing address
               </div>
             ) : (
               <div style={grid3}>
-                <EField label="Company / Name"><ETextInput value={shipForm.company_name} onChange={(e) => updateShipForm("company_name", e.target.value)} placeholder="Company Name" /></EField>
-                <EField label="Address Line 1"><ETextInput value={shipForm.address_line1} onChange={(e) => updateShipForm("address_line1", e.target.value)} placeholder="Building, Street" /></EField>
-                <EField label="Address Line 2"><ETextInput value={shipForm.address_line2} onChange={(e) => updateShipForm("address_line2", e.target.value)} placeholder="Landmark" /></EField>
-                <EField label="City"><ETextInput value={shipForm.city} onChange={(e) => updateShipForm("city", e.target.value)} placeholder="Mumbai" /></EField>
-                <EField label="State">
-                  <ESelectInput value={shipForm.state} onChange={(e) => updateShipForm("state", e.target.value)} placeholder="Select State" options={indianStates.map((s) => ({ value: s.name, label: s.name }))} />
+                <EField label="Company / Name">
+                  <ETextInput
+                    value={shipForm.company_name}
+                    onChange={(e) =>
+                      updateShipForm("company_name", e.target.value)
+                    }
+                    placeholder="Company Name"
+                  />
                 </EField>
-                <EField label="State Code"><ETextInput value={shipForm.state_code} readOnly onChange={() => {}} placeholder="27" /></EField>
-                <EField label="Pincode"><ETextInput value={shipForm.pincode} onChange={(e) => updateShipForm("pincode", e.target.value)} placeholder="400001" /></EField>
+                <EField label="Address Line 1">
+                  <ETextInput
+                    value={shipForm.address_line1}
+                    onChange={(e) =>
+                      updateShipForm("address_line1", e.target.value)
+                    }
+                    placeholder="Building, Street"
+                  />
+                </EField>
+                <EField label="Address Line 2">
+                  <ETextInput
+                    value={shipForm.address_line2}
+                    onChange={(e) =>
+                      updateShipForm("address_line2", e.target.value)
+                    }
+                    placeholder="Landmark"
+                  />
+                </EField>
+                <EField label="City">
+                  <ETextInput
+                    value={shipForm.city}
+                    onChange={(e) => updateShipForm("city", e.target.value)}
+                    placeholder="Mumbai"
+                  />
+                </EField>
+                <EField label="State">
+                  <ESelectInput
+                    value={shipForm.state}
+                    onChange={(e) => updateShipForm("state", e.target.value)}
+                    placeholder="Select State"
+                    options={indianStates.map((s) => ({
+                      value: s.name,
+                      label: s.name,
+                    }))}
+                  />
+                </EField>
+                <EField label="State Code">
+                  <ETextInput
+                    value={shipForm.state_code}
+                    readOnly
+                    onChange={() => {}}
+                    placeholder="27"
+                  />
+                </EField>
+                <EField label="Pincode">
+                  <ETextInput
+                    value={shipForm.pincode}
+                    onChange={(e) => updateShipForm("pincode", e.target.value)}
+                    placeholder="400001"
+                  />
+                </EField>
               </div>
             )}
           </div>
@@ -513,17 +894,82 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
       </ESection>
 
       {/* E-Way Bill */}
-      <div style={{ background: "#fff", borderRadius: "12px", border: "1.5px solid #e5e7eb", overflow: "hidden", marginBottom: "20px" }}>
-        <div style={{ padding: "14px 20px", background: "#f8fafc", borderBottom: ewayEnabled ? "1.5px solid #e5e7eb" : "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "12px",
+          border: "1.5px solid #e5e7eb",
+          overflow: "hidden",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          style={{
+            padding: "14px 20px",
+            background: "#f8fafc",
+            borderBottom: ewayEnabled ? "1.5px solid #e5e7eb" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "15px" }}>🛣️</span>
-            <span style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", color: "#374151", textTransform: "uppercase" }}>E-Way Bill Details</span>
-            <span style={{ fontSize: "11px", color: "#6b7280", fontWeight: 500 }}>(Required if value &gt; ₹50,000)</span>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                color: "#374151",
+                textTransform: "uppercase",
+              }}
+            >
+              E-Way Bill Details
+            </span>
+            <span
+              style={{ fontSize: "11px", color: "#6b7280", fontWeight: 500 }}
+            >
+              (Required if value &gt; ₹50,000)
+            </span>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <span style={{ fontSize: "12px", color: "#6b7280", fontWeight: 600 }}>{ewayEnabled ? "Enabled" : "Disabled"}</span>
-            <div onClick={() => setEwayEnabled(!ewayEnabled)} style={{ width: "42px", height: "24px", borderRadius: "12px", background: ewayEnabled ? "#1e3a5f" : "#d1d5db", position: "relative", cursor: "pointer", transition: "background 0.2s" }}>
-              <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: ewayEnabled ? "21px" : "3px", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: "pointer",
+            }}
+          >
+            <span
+              style={{ fontSize: "12px", color: "#6b7280", fontWeight: 600 }}
+            >
+              {ewayEnabled ? "Enabled" : "Disabled"}
+            </span>
+            <div
+              onClick={() => setEwayEnabled(!ewayEnabled)}
+              style={{
+                width: "42px",
+                height: "24px",
+                borderRadius: "12px",
+                background: ewayEnabled ? "#1e3a5f" : "#d1d5db",
+                position: "relative",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+            >
+              <div
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  background: "#fff",
+                  position: "absolute",
+                  top: "3px",
+                  left: ewayEnabled ? "21px" : "3px",
+                  transition: "left 0.2s",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                }}
+              />
             </div>
           </label>
         </div>
@@ -531,24 +977,108 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
           <div style={{ padding: "20px" }}>
             <div style={{ ...grid3, marginBottom: "20px" }}>
               <EField label="Document Type" required>
-                <ESelectInput value={docType} onChange={(e) => setDocType(e.target.value)} options={[{ value: "INV", label: "Tax Invoice" }, { value: "BIL", label: "Bill of Supply" }, { value: "BOE", label: "Bill of Entry" }, { value: "CHL", label: "Delivery Challan" }, { value: "OTH", label: "Others" }]} />
+                <ESelectInput
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value)}
+                  options={[
+                    { value: "INV", label: "Tax Invoice" },
+                    { value: "BIL", label: "Bill of Supply" },
+                    { value: "BOE", label: "Bill of Entry" },
+                    { value: "CHL", label: "Delivery Challan" },
+                    { value: "OTH", label: "Others" },
+                  ]}
+                />
               </EField>
-              <EField label="Approximate Distance (KM)"><ETextInput type="number" value={approximateDistance} onChange={(e) => setApproximateDistance(e.target.value)} placeholder="e.g. 150" /></EField>
+              <EField label="Approximate Distance (KM)">
+                <ETextInput
+                  type="number"
+                  value={approximateDistance}
+                  onChange={(e) => setApproximateDistance(e.target.value)}
+                  placeholder="e.g. 150"
+                />
+              </EField>
             </div>
-            <div style={{ height: "1px", background: "#f0f4f8", margin: "0 0 20px 0" }} />
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "14px" }}>Transporter Details</div>
+            <div
+              style={{
+                height: "1px",
+                background: "#f0f4f8",
+                margin: "0 0 20px 0",
+              }}
+            />
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#9ca3af",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                marginBottom: "14px",
+              }}
+            >
+              Transporter Details
+            </div>
             <div style={{ ...grid2, marginBottom: "20px" }}>
-              <EField label="Transporter Name"><ETextInput value={transporterName} onChange={(e) => setTransporterName(e.target.value)} placeholder="Transporter name" /></EField>
-              <EField label="Transporter Doc No"><ETextInput value={transporterDocNo} onChange={(e) => setTransporterDocNo(e.target.value)} placeholder="LR / RR / Airway Bill No." /></EField>
+              <EField label="Transporter Name">
+                <ETextInput
+                  value={transporterName}
+                  onChange={(e) => setTransporterName(e.target.value)}
+                  placeholder="Transporter name"
+                />
+              </EField>
+              <EField label="Transporter Doc No">
+                <ETextInput
+                  value={transporterDocNo}
+                  onChange={(e) => setTransporterDocNo(e.target.value)}
+                  placeholder="LR / RR / Airway Bill No."
+                />
+              </EField>
             </div>
-            <div style={{ height: "1px", background: "#f0f4f8", margin: "0 0 20px 0" }} />
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "14px" }}>Vehicle Details</div>
+            <div
+              style={{
+                height: "1px",
+                background: "#f0f4f8",
+                margin: "0 0 20px 0",
+              }}
+            />
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#9ca3af",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                marginBottom: "14px",
+              }}
+            >
+              Vehicle Details
+            </div>
             <div style={grid3}>
               <EField label="Mode of Transport">
-                <ESelectInput value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value)} options={[{ value: "1", label: "Road" }, { value: "2", label: "Rail" }, { value: "3", label: "Air" }, { value: "4", label: "Ship" }]} />
+                <ESelectInput
+                  value={deliveryMode}
+                  onChange={(e) => setDeliveryMode(e.target.value)}
+                  options={[
+                    { value: "1", label: "Road" },
+                    { value: "2", label: "Rail" },
+                    { value: "3", label: "Air" },
+                    { value: "4", label: "Ship" },
+                  ]}
+                />
               </EField>
-              <EField label="Vehicle No"><ETextInput value={vehicleNo} onChange={(e) => setVehicleNo(e.target.value)} placeholder="MH04AB1234" /></EField>
-              <EField label="From"><ETextInput value={from} onChange={(e) => setFrom(e.target.value)} placeholder="City / Place of dispatch" /></EField>
+              <EField label="Vehicle No">
+                <ETextInput
+                  value={vehicleNo}
+                  onChange={(e) => setVehicleNo(e.target.value)}
+                  placeholder="MH04AB1234"
+                />
+              </EField>
+              <EField label="From">
+                <ETextInput
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  placeholder="City / Place of dispatch"
+                />
+              </EField>
             </div>
           </div>
         )}
@@ -557,39 +1087,251 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
       {/* Items Table */}
       <ESection title="Items / Services" icon="📦">
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "13px",
+            }}
+          >
             <thead>
               <tr style={{ background: "#f8fafc" }}>
-                {["#", "Description", "Item Code", "HSN/SAC", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
-                  <th key={h} style={{ padding: "10px 10px", textAlign: ["Taxable (₹)", "Tax (₹)", "Total (₹)", "Rate (₹)"].includes(h) ? "right" : "left", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb", whiteSpace: "nowrap" }}>{h}</th>
+                {[
+                  "#",
+                  "Description",
+                  "Item Code",
+                  "HSN/SAC",
+                  "Unit",
+                  "Qty",
+                  "Rate (₹)",
+                  "Disc %",
+                  "Taxable (₹)",
+                  "GST %",
+                  "Tax (₹)",
+                  "Total (₹)",
+                  "",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "10px 10px",
+                      textAlign: [
+                        "Taxable (₹)",
+                        "Tax (₹)",
+                        "Total (₹)",
+                        "Rate (₹)",
+                      ].includes(h)
+                        ? "right"
+                        : "left",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      color: "#6b7280",
+                      textTransform: "uppercase",
+                      borderBottom: "1.5px solid #e5e7eb",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => (
+              {itemsState.map((item, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "8px 10px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
-                  <td style={{ padding: "5px 6px", minWidth: "160px" }}><input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
-                  <td style={{ padding: "5px 6px", width: "100px" }}><input value={item.itemCode} onChange={(e) => updateItem(i, "itemCode", e.target.value)} placeholder="Code" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
-                  <td style={{ padding: "5px 6px", width: "100px" }}><input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} placeholder="HSN" style={{ ...editInputStyle, padding: "6px 9px", fontSize: "12.5px" }} /></td>
+                  <td
+                    style={{
+                      padding: "8px 10px",
+                      color: "#9ca3af",
+                      fontWeight: 600,
+                      fontSize: "12px",
+                    }}
+                  >
+                    {i + 1}
+                  </td>
+                  <td style={{ padding: "5px 6px", minWidth: "160px" }}>
+                    <input
+                      value={item.description}
+                      onChange={(e) =>
+                        updateItem(i, "description", e.target.value)
+                      }
+                      placeholder="Item description"
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 9px",
+                        fontSize: "12.5px",
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: "5px 6px", width: "100px" }}>
+                    <input
+                      value={item.item_code}
+                      onChange={(e) =>
+                        updateItem(i, "itemCode", e.target.value)
+                      }
+                      placeholder="Code"
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 9px",
+                        fontSize: "12.5px",
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: "5px 6px", width: "100px" }}>
+                    <input
+                      value={item.hsn}
+                      onChange={(e) => updateItem(i, "hsn", e.target.value)}
+                      placeholder="HSN"
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 9px",
+                        fontSize: "12.5px",
+                      }}
+                    />
+                  </td>
                   <td style={{ padding: "5px 6px", width: "75px" }}>
-                    <select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...editInputStyle, padding: "6px 7px", fontSize: "12px" }}>
-                      {units.map((u) => <option key={u}>{u}</option>)}
+                    <select
+                      value={item.unit}
+                      onChange={(e) => updateItem(i, "unit", e.target.value)}
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 7px",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {units.map((u) => (
+                        <option key={u}>{u}</option>
+                      ))}
                     </select>
                   </td>
-                  <td style={{ padding: "5px 6px", width: "65px" }}><input type="number" value={item.qty} min={1} onChange={(e) => updateItem(i, "qty", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} /></td>
-                  <td style={{ padding: "5px 6px", width: "100px" }}><input type="number" value={item.rate} onChange={(e) => updateItem(i, "rate", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "right" }} /></td>
-                  <td style={{ padding: "5px 6px", width: "65px" }}><input type="number" value={item.discount} min={0} max={100} onChange={(e) => updateItem(i, "discount", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} /></td>
-                  <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td style={{ padding: "5px 6px", width: "65px" }}>
+                    <input
+                      type="number"
+                      value={item.qty}
+                      min={1}
+                      onChange={(e) =>
+                        updateItem(i, "qty", Number(e.target.value))
+                      }
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 8px",
+                        fontSize: "12.5px",
+                        textAlign: "center",
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: "5px 6px", width: "100px" }}>
+                    <input
+                      type="number"
+                      value={item.rate}
+                      onChange={(e) =>
+                        updateItem(i, "rate", Number(e.target.value))
+                      }
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 8px",
+                        fontSize: "12.5px",
+                        textAlign: "right",
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: "5px 6px", width: "65px" }}>
+                    <input
+                      type="number"
+                      value={item.discount}
+                      min={0}
+                      max={100}
+                      onChange={(e) =>
+                        updateItem(i, "discount", Number(e.target.value))
+                      }
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 8px",
+                        fontSize: "12.5px",
+                        textAlign: "center",
+                      }}
+                    />
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 10px",
+                      textAlign: "right",
+                      fontWeight: 600,
+                      color: "#374151",
+                      whiteSpace: "nowrap",
+                      fontSize: "12.5px",
+                    }}
+                  >
+                    ₹{" "}
+                    {itemTaxable(item).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
                   <td style={{ padding: "5px 6px", width: "70px" }}>
-                    <select value={item.gstRate} onChange={(e) => updateItem(i, "gstRate", Number(e.target.value))} style={{ ...editInputStyle, padding: "6px 7px", fontSize: "12px" }}>
-                      {gstOptions.map((r) => <option key={r} value={r}>{r}%</option>)}
+                    <select
+                      value={Number(item.gst_rate)}
+                      onChange={(e) =>
+                        updateItem(i, "gst_rate", Number(e.target.value))
+                      }
+                      style={{
+                        ...editInputStyle,
+                        padding: "6px 7px",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {gstOptions.map((r) => (
+                        <option key={r} value={r}>
+                          {r}%
+                        </option>
+                      ))}
                     </select>
                   </td>
-                  <td style={{ padding: "6px 10px", textAlign: "right", color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>₹ {itemTax(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "#1e3a5f", whiteSpace: "nowrap", fontSize: "12.5px" }}>₹ {itemTotal(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td
+                    style={{
+                      padding: "6px 10px",
+                      textAlign: "right",
+                      color: "#374151",
+                      whiteSpace: "nowrap",
+                      fontSize: "12.5px",
+                    }}
+                  >
+                    ₹{" "}
+                    {itemTax(item).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 10px",
+                      textAlign: "right",
+                      fontWeight: 700,
+                      color: "#1e3a5f",
+                      whiteSpace: "nowrap",
+                      fontSize: "12.5px",
+                    }}
+                  >
+                    ₹{" "}
+                    {itemTotal(item).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
                   <td style={{ padding: "5px 6px", textAlign: "center" }}>
-                    <button onClick={() => removeItem(i)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "16px", padding: "4px 6px", borderRadius: "6px" }} title="Remove">×</button>
+                    <button
+                      onClick={() => removeItem(i)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#ef4444",
+                        fontSize: "16px",
+                        padding: "4px 6px",
+                        borderRadius: "6px",
+                      }}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -597,40 +1339,217 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
           </table>
         </div>
 
-        <button onClick={addItem} style={{ marginTop: "12px", padding: "8px 16px", border: "1.5px dashed #d1d5db", borderRadius: "8px", background: "none", fontSize: "13px", fontWeight: 600, color: "#3b82f6", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+        <button
+          onClick={addItem}
+          style={{
+            marginTop: "12px",
+            padding: "8px 16px",
+            border: "1.5px dashed #d1d5db",
+            borderRadius: "8px",
+            background: "none",
+            fontSize: "13px",
+            fontWeight: 600,
+            color: "#3b82f6",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
           <span style={{ fontSize: "16px" }}>+</span> Add Item
         </button>
 
         {/* Totals */}
-        <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end" }}>
-          <div style={{ width: "340px", background: "#f8fafc", borderRadius: "10px", padding: "16px", border: "1.5px solid #e5e7eb" }}>
-            {[["Subtotal (Gross)", `₹ ${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`], ["Total Discount", `- ₹ ${totalDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`], ["Taxable Amount", `$ ${taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`]].map((row) => (
-              <div key={row[0]} style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "13px", color: "#374151" }}>
-                <span>{row[0]}</span><span style={{ fontWeight: 600 }}>{row[1]}</span>
+        <div
+          style={{
+            marginTop: "24px",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <div
+            style={{
+              width: "340px",
+              background: "#f8fafc",
+              borderRadius: "10px",
+              padding: "16px",
+              border: "1.5px solid #e5e7eb",
+            }}
+          >
+            {[
+              [
+                "Subtotal (Gross)",
+                `₹ ${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+              ],
+              [
+                "Total Discount",
+                `- ₹ ${totalDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+              ],
+              [
+                "Taxable Amount",
+                `₹ ${taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+              ],
+            ].map((row) => (
+              <div
+                key={row[0]}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "10px",
+                  fontSize: "13px",
+                  color: "#374151",
+                }}
+              >
+                <span>{row[0]}</span>
+                <span style={{ fontWeight: 600 }}>{row[1]}</span>
               </div>
             ))}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", fontSize: "13px", color: "#374151" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "10px",
+                fontSize: "13px",
+                color: "#374151",
+              }}
+            >
               <span>P & F / Transport Charge</span>
-              <input type="number" value={pfCharge} onChange={(e) => setPfCharge(e.target.value)} style={{ width: "100px", padding: "5px 8px", border: "1.5px solid #d1d5db", borderRadius: "6px", fontSize: "13px", textAlign: "right", background: "#fff" }} />
+              <input
+                type="number"
+                value={pfCharge}
+                onChange={(e) => setPfCharge(e.target.value)}
+                style={{
+                  width: "100px",
+                  padding: "5px 8px",
+                  border: "1.5px solid #d1d5db",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  textAlign: "right",
+                  background: "#fff",
+                }}
+              />
             </div>
-            <div style={{ height: "1px", background: "#e5e7eb", margin: "12px 0" }} />
+            <div
+              style={{ height: "1px", background: "#e5e7eb", margin: "12px 0" }}
+            />
             {!isInter ? (
-              <><div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", color: "#374151" }}><span>CGST</span><span>$ {cgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", color: "#374151" }}><span>SGST</span><span>$ {sgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div></>
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px",
+                    fontSize: "13px",
+                    color: "#374151",
+                  }}
+                >
+                  <span>CGST</span>
+                  <span>
+                    ₹{" "}
+                    {cgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px",
+                    fontSize: "13px",
+                    color: "#374151",
+                  }}
+                >
+                  <span>SGST</span>
+                  <span>
+                    ₹{" "}
+                    {sgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </>
             ) : (
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", color: "#374151" }}><span>IGST</span><span>$ {igst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                  fontSize: "13px",
+                  color: "#374151",
+                }}
+              >
+                <span>IGST</span>
+                <span>
+                  ₹ {igst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
             )}
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", color: "#374151" }}><span>Total Tax Amount</span><span style={{ fontWeight: 600 }}>$ {(cgst + sgst + igst).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "13px", color: "#374151" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+                fontSize: "13px",
+                color: "#374151",
+              }}
+            >
+              <span>Total Tax Amount</span>
+              <span style={{ fontWeight: 600 }}>
+                ₹{" "}
+                {(cgst + sgst + igst).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+                fontSize: "13px",
+                color: "#374151",
+              }}
+            >
               <span>Round Off</span>
-              <span style={{ color: roundOff >= 0 ? "#10b981" : "#ef4444" }}>{roundOff >= 0 ? "+" : ""}$ {roundOff.toFixed(2)}</span>
+              <span style={{ color: roundOff >= 0 ? "#10b981" : "#ef4444" }}>
+                {roundOff >= 0 ? "+" : ""}₹ {roundOff.toFixed(2)}
+              </span>
             </div>
-            <div style={{ background: "#1e3a5f", borderRadius: "8px", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}>Grand Total</span>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: "16px" }}>$ {grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <div
+              style={{
+                background: "#1e3a5f",
+                borderRadius: "8px",
+                padding: "12px 14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: "8px",
+              }}
+            >
+              <span
+                style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}
+              >
+                Grand Total
+              </span>
+              <span
+                style={{ color: "#fff", fontWeight: 800, fontSize: "16px" }}
+              >
+                ₹{" "}
+                {grandTotal.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
             </div>
-            <div style={{ marginTop: "10px", fontSize: "11.5px", color: "#6b7280", lineHeight: "1.5" }}>
-              <span style={{ fontWeight: 700, color: "#374151" }}>In Words: </span>{numberToWords(Math.round(grandTotal))} Rupees Only
+            <div
+              style={{
+                marginTop: "10px",
+                fontSize: "11.5px",
+                color: "#6b7280",
+                lineHeight: "1.5",
+              }}
+            >
+              <span style={{ fontWeight: 700, color: "#374151" }}>
+                In Words:{" "}
+              </span>
+              {numberToWords(Math.round(grandTotal))} Rupees Only
             </div>
           </div>
         </div>
@@ -639,33 +1558,192 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
       {/* Tax Summary */}
       <ESection title="Tax Summary (HSN-wise)" icon="📊">
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "13px",
+            }}
+          >
             <thead>
               <tr style={{ background: "#f8fafc" }}>
-                {["Sr.", "HSN/SAC", "Taxable Value", ...(isInter ? ["IGST Rate", "IGST Amount"] : ["CGST Rate", "CGST Amount", "SGST Rate", "SGST Amount"]), "Total Tax"].map((h) => (
-                  <th key={h} style={{ padding: "10px 12px", textAlign: ["Taxable Value", "IGST Amount", "CGST Amount", "SGST Amount", "Total Tax"].includes(h) ? "right" : "left", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb" }}>{h}</th>
+                {[
+                  "Sr.",
+                  "HSN/SAC",
+                  "Taxable Value",
+                  ...(isInter
+                    ? ["IGST Rate", "IGST Amount"]
+                    : ["CGST Rate", "CGST Amount", "SGST Rate", "SGST Amount"]),
+                  "Total Tax",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "10px 12px",
+                      textAlign: [
+                        "Taxable Value",
+                        "IGST Amount",
+                        "CGST Amount",
+                        "SGST Amount",
+                        "Total Tax",
+                      ].includes(h)
+                        ? "right"
+                        : "left",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      color: "#6b7280",
+                      textTransform: "uppercase",
+                      borderBottom: "1.5px solid #e5e7eb",
+                    }}
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {Object.values(taxSummary).map((row, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{i + 1}</td>
-                  <td style={{ padding: "10px 12px", fontWeight: 600 }}>{row.hsn}</td>
-                  <td style={{ padding: "10px 12px", textAlign: "right" }}>$ {row.taxable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  {isInter ? (<><td style={{ padding: "10px 12px" }}>{row.rate}%</td><td style={{ padding: "10px 12px", textAlign: "right" }}>$ {row.igstAmt.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></>) : (
-                    <><td style={{ padding: "10px 12px" }}>{row.rate / 2}%</td><td style={{ padding: "10px 12px", textAlign: "right" }}>$ {row.cgstAmt.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td><td style={{ padding: "10px 12px" }}>{row.rate / 2}%</td><td style={{ padding: "10px 12px", textAlign: "right" }}>$ {row.sgstAmt.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></>
+                  <td style={{ padding: "10px 12px", color: "#9ca3af" }}>
+                    {i + 1}
+                  </td>
+                  <td style={{ padding: "10px 12px", fontWeight: 600 }}>
+                    {row.hsn}
+                  </td>
+                  <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                    ₹{" "}
+                    {row.taxable.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
+                  {isInter ? (
+                    <>
+                      <td style={{ padding: "10px 12px" }}>{row.rate}%</td>
+                      <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                        ₹{" "}
+                        {row.igstAmt.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={{ padding: "10px 12px" }}>{row.rate / 2}%</td>
+                      <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                        ₹{" "}
+                        {row.cgstAmt.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td style={{ padding: "10px 12px" }}>{row.rate / 2}%</td>
+                      <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                        ₹{" "}
+                        {row.sgstAmt.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </td>
+                    </>
                   )}
-                  <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 700, color: "#1e3a5f" }}>$ {(row.cgstAmt + row.sgstAmt + row.igstAmt).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td
+                    style={{
+                      padding: "10px 12px",
+                      textAlign: "right",
+                      fontWeight: 700,
+                      color: "#1e3a5f",
+                    }}
+                  >
+                    ₹{" "}
+                    {(row.cgstAmt + row.sgstAmt + row.igstAmt).toLocaleString(
+                      "en-IN",
+                      { minimumFractionDigits: 2 },
+                    )}
+                  </td>
                 </tr>
               ))}
               <tr style={{ background: "#f0f4f8" }}>
-                <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 700, fontSize: "12px", color: "#374151" }}>TOTAL</td>
-                <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 700 }}>$ {taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                {isInter ? (<><td></td><td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 700 }}>$ {igst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></>) : (
-                  <><td></td><td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 700 }}>$ {cgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td><td></td><td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 700 }}>$ {sgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></>
+                <td
+                  colSpan={2}
+                  style={{
+                    padding: "10px 12px",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    color: "#374151",
+                  }}
+                >
+                  TOTAL
+                </td>
+                <td
+                  style={{
+                    padding: "10px 12px",
+                    textAlign: "right",
+                    fontWeight: 700,
+                  }}
+                >
+                  ₹{" "}
+                  {taxableAmount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </td>
+                {isInter ? (
+                  <>
+                    <td></td>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "right",
+                        fontWeight: 700,
+                      }}
+                    >
+                      ₹{" "}
+                      {igst.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td></td>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "right",
+                        fontWeight: 700,
+                      }}
+                    >
+                      ₹{" "}
+                      {cgst.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td></td>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        textAlign: "right",
+                        fontWeight: 700,
+                      }}
+                    >
+                      ₹{" "}
+                      {sgst.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                  </>
                 )}
-                <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 700, color: "#1e3a5f" }}>$ {(cgst + sgst + igst).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                <td
+                  style={{
+                    padding: "10px 12px",
+                    textAlign: "right",
+                    fontWeight: 700,
+                    color: "#1e3a5f",
+                  }}
+                >
+                  ₹{" "}
+                  {(cgst + sgst + igst).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -674,19 +1752,60 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
 
       {/* Terms & Conditions */}
       <ESection title="Terms & Conditions" icon="📝">
-        <textarea value={termsAndConditions} onChange={(e) => setTermsAndConditions(e.target.value)}
-          rows={4} placeholder="Enter terms and conditions..."
-          style={{ ...editInputStyle, resize: "vertical", fontFamily: "inherit", lineHeight: "1.6" }} />
+        <textarea
+          value={termsAndConditions}
+          onChange={(e) => setTermsAndConditions(e.target.value)}
+          rows={4}
+          placeholder="Enter terms and conditions..."
+          style={{
+            ...editInputStyle,
+            resize: "vertical",
+            fontFamily: "inherit",
+            lineHeight: "1.6",
+          }}
+        />
       </ESection>
 
       {/* Footer Actions */}
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingBottom: "40px" }}>
-        <button type="button" onClick={onCancel}
-          style={{ padding: "11px 28px", border: "1.5px solid #d1d5db", borderRadius: "8px", background: "#fff", fontSize: "13.5px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "12px",
+          paddingBottom: "40px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            padding: "11px 28px",
+            border: "1.5px solid #d1d5db",
+            borderRadius: "8px",
+            background: "#fff",
+            fontSize: "13.5px",
+            fontWeight: 600,
+            color: "#374151",
+            cursor: "pointer",
+          }}
+        >
           Cancel
         </button>
-        <button type="button" onClick={handleSave}
-          style={{ padding: "11px 28px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13.5px", fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.3px" }}>
+        <button
+          type="button"
+          onClick={handleSave}
+          style={{
+            padding: "11px 28px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#1e3a5f",
+            fontSize: "13.5px",
+            fontWeight: 700,
+            color: "#fff",
+            cursor: "pointer",
+            letterSpacing: "0.3px",
+          }}
+        >
           💾 Update Invoice
         </button>
       </div>
@@ -700,6 +1819,8 @@ export default function InvoiceDetail() {
   const navigate = useNavigate();
    const { user } = useAuth();  
     const [profile, setProfile] = useState();
+    const [customer, setCustomer] = useState();
+    const [items, setItems] = useState([]); 
 
 
   // ── Added: mode & invoice state for edit toggle ──
@@ -745,8 +1866,7 @@ export default function InvoiceDetail() {
     return <EditInvoiceForm invoice={invoice} profile={profile} items={items} onSave={handleSave} onCancel={() => setMode("view")} />;
   }
 
-  // ── View mode: 100% original code, zero changes ──
-  const { customer, shipping, items, pfCharge, supplyType, ewayBill } = invoice;
+ 
 
   const itemTaxable = (item) => {
     const gross = item.qty * item.rate;
@@ -756,10 +1876,17 @@ export default function InvoiceDetail() {
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
   const itemDiscount = (item) => (item.qty * item.rate * (item.discount || 0)) / 100;
 
-  const subtotal = items.reduce((s, item) => s + item.qty * item.rate, 0);
-  const totalDiscount = items.reduce((s, item) => s + itemDiscount(item), 0);
+  const subtotal = items.reduce((sum, item) => {
+  const qty = Number(item.qty) || 0;
+  const rate = Number(item.rate) || 0;
+  return sum + qty * rate;
+}, 0);
+
+const totalDiscount = items.reduce((sum, item) => {
+  return sum + (itemDiscount(item) || 0);
+}, 0);
   const taxableAmount = subtotal - totalDiscount;
-  const grandTaxable = taxableAmount + Number(pfCharge);
+  const grandTaxable = taxableAmount + Number(0);
 
   const isInter = invoice.ship_state_code == profile?.state_code;
   console.log(isInter);
@@ -816,7 +1943,7 @@ export default function InvoiceDetail() {
             </button>
             <div>
               <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Invoice {invoice.invoiceNo}</h1>
-              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(invoice.invoiceDate)} · {customer.company_name}</p>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(invoice.invoiceDate)} · {customer?.company_name}</p>
             </div>
             <StatusBadge status={invoice.status} />
           </div>
@@ -886,7 +2013,7 @@ export default function InvoiceDetail() {
           {/* ── INVOICE TITLE BAR ── */}
           <div style={{ background: "#f8fafc", borderBottom: "1.5px solid #e5e7eb", padding: "9px 28px", textAlign: "center" }}>
             <span style={{ fontSize: "15px", fontWeight: 800, color: "#111827", letterSpacing: "1px", textTransform: "uppercase" }}>
-              {invoice.invoiceType || "Tax Invoice"}
+              {invoice.invoice_type || "Tax Invoice"}
             </span>
           </div>
 
@@ -898,22 +2025,22 @@ export default function InvoiceDetail() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Billing Address
               </div>
-              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.bill_company_name}</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{customer?.company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {invoice.bill_address1}
-                {invoice.bill_address2 && <>, {invoice.bill_address2}</>}
-                <br />{invoice.bill_city}, {invoice.bill_state}, India
-                <br />Pincode: {invoice.bill_pincode}
-                {invoice.bill_state && (
+                {customer?.address_line1}
+                {customer?.address_line2 && <>, {customer?.address_line2}</>}
+                <br />{customer?.city}, {customer?.state}, India
+                <br />Pincode: {customer?.pincode}
+                {customer?.place_of_supply && (
                   <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "2px" }}>
-                    State Code : <strong> {invoice.bill_state_code}</strong>
+                    State Code : <strong> {customer?.place_of_supply_code}</strong>
                   </div>
                 )}
               </div>
-              {customer?.customer_gstin && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "2px" }}>GSTIN: <strong>{customer.customer_gstin}</strong></div>}
-              {customer?.customer_pan && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "4px" }}>PAN: <strong>{customer.customer_pan}</strong></div>}
-              {customer?.customer_phone && <div style={{ fontSize: "12px", color: "#4b5563", marginTop: "4px" }}>Mo: +91-{customer.customer_phone}</div>}
-              {customer?.customer_email && <div style={{ fontSize: "12px", color: "#4b5563" }}>{customer.customer_email}</div>}
+              {customer?.gstin && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "2px" }}>GSTIN: <strong>{customer?.gstin}</strong></div>}
+              {customer?.pan && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "4px" }}>PAN: <strong>{customer?.pan}</strong></div>}
+              {customer?.phone && <div style={{ fontSize: "12px", color: "#4b5563", marginTop: "4px" }}>Mo: +91-{customer?.phone}</div>}
+              {customer?.email && <div style={{ fontSize: "12px", color: "#4b5563" }}>{customer?.email}</div>}
             </div>
 
             {/* Shipping Address */}
@@ -921,16 +2048,16 @@ export default function InvoiceDetail() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Shipping Address
               </div>
-              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{shipping.company_name}</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.ship_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {invoice.ship_address1}
+                {invoice.ship_address_line1}
                 {invoice.ship_address2 && <>, {invoice.ship_address2}</>}
                 <br />{invoice.ship_city}, {invoice.ship_state}, India
                 <br />Pincode: {invoice.ship_pincode}
               </div>
-              {shipping.place_of_supply && (
+              {invoice.ship_state && (
                 <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "4px" }}>
-                  State Code: <strong>{shipping.place_of_supply_code}</strong>
+                  State Code: <strong>{invoice.ship_state_code}</strong>
                 </div>
               )}
             </div>
@@ -940,26 +2067,21 @@ export default function InvoiceDetail() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Invoice Details
               </div>
-              <MetaRow label="Invoice No." value={invoice.invoiceNo} />
-              <MetaRow label="Invoice Date" value={formatDate(invoice.invoiceDate)} />
-              <MetaRow label="Invoice Type" value={invoice.invoiceType} />
-              <MetaRow label="Supply Type" value={invoice.supplyType ? invoice.supplyType.charAt(0).toUpperCase() + invoice.supplyType.slice(1) : "—"} />
-              <MetaRow label="Sub-Supply Type" value={invoice.subSupplyType} />
-              <MetaRow label="Rev. Charge" value={invoice.revCharge} />
-              <MetaRow label="Place of Supply" value={`${customer.place_of_supply} (${customer.place_of_supply_code})`} />
+              <MetaRow label="Invoice No." value={invoice.invoice_no} />
+              <MetaRow label="Invoice Date" value={formatDate(invoice.invoice_date)} />
+              <MetaRow label="Invoice Type" value={invoice.invoice_type} />
+              <MetaRow label="Supply Type" value={invoice.supply_type ? invoice.supply_type.charAt(0).toUpperCase() + invoice.supply_type.slice(1) : "—"} />
+              <MetaRow label="Sub-Supply Type" value={invoice.sub_supply_type} />
+              <MetaRow label="Rev. Charge" value={invoice.reverse_charge} />
+              <MetaRow label="Place of Supply" value={`${invoice.ship_state} (${invoice.ship_state_code})`} />
 
               {/* ── E-Way Bill No. ── */}
-            {ewayBill?.ewayBillNo && (
-  <>
-    <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
-    <MetaRow label="E-Way Bill No." value={ewayBill.ewayBillNo} />
-    {ewayBill.ewayBillDate && <MetaRow label="E-Way Bill Date" value={formatDate(ewayBill.ewayBillDate)} />}
-    {ewayBill.ewayValidUpto && <MetaRow label="Valid Upto" value={formatDate(ewayBill.ewayValidUpto)} />}
-    {ewayBill.transportMode && <MetaRow label="Transport Mode" value={ewayBill.transportMode} />}
-    {ewayBill.vehicleNo && <MetaRow label="Vehicle No." value={ewayBill.vehicleNo} />}
-    {ewayBill.transporterName && <MetaRow label="Transporter" value={ewayBill.transporterName} />}
-  </>
-)}
+              {invoice?.eway_bill_no && (
+                <>
+                  <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
+                  <MetaRow label="E-Way Bill No." value={invoice.eway_bill_no} />
+                </>
+              )}
             </div>
           </div>
 
@@ -994,9 +2116,9 @@ export default function InvoiceDetail() {
                     <td style={{ ...cell(), textAlign: "right" }}> {fmt(item.rate)}</td>
                     <td style={{ ...cell(), textAlign: "right", color: "#dc2626" }}>{item.discount ? `${item.discount}%` : "0.00%"}</td>
                     <td style={{ ...cell(), textAlign: "right", fontWeight: 600 }}>{fmt(itemTaxable(item))}</td>
-                    <td style={{ ...cell(), textAlign: "right" }}>{item.gstRate}%</td>
-                    <td style={{ ...cell(), textAlign: "right" }}>{fmt(itemTax(item))}</td>
-                    <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 700, color: "#1e3a5f" }}>{fmt(itemTotal(item))}</td>
+                    <td style={{ ...cell(), textAlign: "right" }}>{item.gst_rate}%</td>
+                    <td style={{ ...cell(), textAlign: "right" }}>{fmt(item.tax)}</td>
+                    <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 700, color: "#1e3a5f" }}>{fmt(item.total)}</td>
                   </tr>
                 ))}
                 <tr style={{ background: "#f0f4f8", borderBottom: "1.5px solid #d1d5db", borderTop: "1.5px solid #d1d5db" }}>
@@ -1006,8 +2128,8 @@ export default function InvoiceDetail() {
                   <td style={{ ...cell(), textAlign: "right", fontWeight: 700, color: "#dc2626" }}>{fmt(totalDiscount)}</td>
                   <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(grandTaxable)}</td>
                   <td style={{ ...cell() }}></td>
-                  <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(cgst + sgst + igst)}</td>
-                  <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 800, color: "#1e3a5f" }}>{fmt(grandTotal)}</td>
+                  <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(invoice.cgst + invoice.sgst + invoice.igst)}</td>
+                  <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", fontWeight: 800, color: "#1e3a5f" }}>{fmt(invoice.grand_total)}</td>
                 </tr>
               </tbody>
             </table>
@@ -1021,11 +2143,11 @@ export default function InvoiceDetail() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "3px 20px", fontSize: "12.5px" }}>
                 {[
-                  ["Name", businessInfo.accountHolder],
-                    ["Bank Name", businessInfo.bank],
-                  ["Branch Name", businessInfo.branch],
-                  ["Account No", businessInfo.account],
-                  ["Branch IFSC", businessInfo.ifsc],
+                  ["Name", profile?.business_name],
+                    ["Bank Name", profile?.bank_name],
+                  ["Branch Name", profile?.branch],
+                  ["Account No", profile?.account_no],
+                  ["Branch IFSC", profile?.ifsc],
                 ].map(([label, val]) => (
                   <>
                     <span key={label + "l"} style={{ color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>
@@ -1051,26 +2173,26 @@ export default function InvoiceDetail() {
               {!isInter ? (
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                    <span style={{ color: "#6b7280" }}>CGST</span><span>{fmt(cgst)}</span>
+                    <span style={{ color: "#6b7280" }}>CGST</span><span>{fmt(invoice.cgst)}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                    <span style={{ color: "#6b7280" }}>SGST</span><span>{fmt(sgst)}</span>
+                    <span style={{ color: "#6b7280" }}>SGST</span><span>{fmt(invoice.sgst)}</span>
                   </div>
                 </>
               ) : (
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                  <span style={{ color: "#6b7280" }}>IGST</span><span>{fmt(igst)}</span>
+                  <span style={{ color: "#6b7280" }}>IGST</span><span>{fmt(invoice.igst)}</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", fontSize: "12px" }}>
-                <span style={{ color: "#6b7280" }}>Tax Amount</span><span style={{ fontWeight: 600 }}>{fmt(cgst + sgst + igst)}</span>
+                <span style={{ color: "#6b7280" }}>Tax Amount</span><span style={{ fontWeight: 600 }}>{fmt(invoice.cgst + invoice.sgst + invoice.igst)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px" }}>
+              {/* <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px" }}>
                 <span style={{ color: "#6b7280" }}>Round Off</span>
                 <span style={{ color: roundOff >= 0 ? "#16a34a" : "#dc2626" }}>{roundOff >= 0 ? "+" : ""}{Math.abs(roundOff).toFixed(2)}</span>
-              </div>
+              </div> */}
               <div style={{ background: "#f0f4f8", border: "1.5px solid #d1d5db", borderRadius: "6px", padding: "10px 14px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#1e3a5f", fontSize: "14px" }}>
-                <span>Net Amount</span><span>{fmt(grandTotal)}</span>
+                <span>Net Amount</span><span>{fmt(invoice.grand_total)}</span>
               </div>
             </div>
           </div>
@@ -1094,22 +2216,22 @@ export default function InvoiceDetail() {
                 </tr>
               </thead>
               <tbody>
-                {Object.values(taxSummary).map((row, i) => (
+                {Object.values(items).map((row, i) => (
                   <tr key={i} style={{ borderBottom: "1px solid #e5e7eb", background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
                     <td style={{ ...cell(), textAlign: "center" }}>{i + 1}</td>
                     <td style={{ ...cell(), fontFamily: "monospace" }}>{row.hsn}</td>
                     <td style={{ ...cell(), textAlign: "right", fontWeight: 600 }}> {fmt(row.taxable)}</td>
                     {isInter ? (
                       <>
-                        <td style={{ ...cell(), textAlign: "right" }}>{row.rate}%</td>
-                        <td style={{ ...cell(), textAlign: "right" }}>{fmt(row.igstAmt)}</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{row.gst_rate}%</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{fmt(row.tax)}</td>
                       </>
                     ) : (
                       <>
-                        <td style={{ ...cell(), textAlign: "right" }}>{row.rate / 2}%</td>
-                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.cgstAmt)}</td>
-                        <td style={{ ...cell(), textAlign: "right" }}>{row.rate / 2}%</td>
-                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.sgstAmt)}</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{row.gst_rate / 2}%</td>
+                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.tax / 2)}</td>
+                        <td style={{ ...cell(), textAlign: "right" }}>{row.gst_rate / 2}%</td>
+                        <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.tax / 2)}</td>
                       </>
                     )}
                     <td style={{ ...cell(), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
@@ -1122,14 +2244,14 @@ export default function InvoiceDetail() {
                   {isInter ? (
                     <>
                       <td style={{ ...cell() }}></td>
-                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(igst)}</td>
+                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}>{fmt(invoice.igst)}</td>
                     </>
                   ) : (
                     <>
                       <td style={{ ...cell() }}></td>
-                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(cgst)}</td>
+                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(invoice.cgst)}</td>
                       <td style={{ ...cell() }}></td>
-                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(sgst)}</td>
+                      <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(invoice.sgst)}</td>
                     </>
                   )}
                   <td style={{ ...cell(), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
