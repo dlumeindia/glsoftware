@@ -37,13 +37,13 @@ const inputStyle = {
   boxSizing: "border-box",
 };
 
-const validateGST = (v) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}₹/.test(v);
-const validatePAN = (v) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}₹/.test(v);
-const validateEmail = (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+₹/.test(v);
-const validatePhone = (v) => !v || /^[6-9][0-9]{9}₹/.test(v);
-const validatePincode = (v) => !v || /^[1-9][0-9]{5}₹/.test(v);
+const validateGST = (v) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(v);
+const validatePAN = (v) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(v);
+const validateEmail = (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const validatePhone = (v) => !v || /^[6-9][0-9]{9}$/.test(v);
+const validatePincode = (v) => !v || /^[1-9][0-9]{5}$/.test(v);
 
-const fmtPhone = (p) => p && p.length === 10 ? `+91 ₹{p.slice(0, 5)} ₹{p.slice(5)}` : p || "—";
+const fmtPhone = (p) => p && p.length === 10 ? `+91 ${p.slice(0, 5)} ${p.slice(5)}` : p || "—";
 const getInitials = (name) => name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
 
@@ -402,7 +402,7 @@ function EditForm({ customer, onSave, onCancel }) {
       <Section title="Shipping Address" icon="🚚">
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", paddingBottom: "16px", borderBottom: "1.5px dashed #e5e7eb" }}>
           <div onClick={() => update("same_as_billing", !form.same_as_billing)}
-            style={{ width: "18px", height: "18px", border: `2px solid ₹{form.same_as_billing ? "#1e3a5f" : "#d1d5db"}`, borderRadius: "4px", background: form.same_as_billing ? "#1e3a5f" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            style={{ width: "18px", height: "18px", border: `2px solid ${form.same_as_billing ? "#1e3a5f" : "#d1d5db"}`, borderRadius: "4px", background: form.same_as_billing ? "#1e3a5f" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             {form.same_as_billing && <span style={{ color: "#fff", fontSize: "11px", fontWeight: 800 }}>✓</span>}
           </div>
           <span onClick={() => update("same_as_billing", !form.same_as_billing)} style={{ fontSize: "13px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>

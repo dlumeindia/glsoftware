@@ -417,13 +417,7 @@ export default function CreateInvoice() {
 
   return (
     <div style={{ width: "100%", margin: "0" }}>
-      {/* Top Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#0b1324", letterSpacing: "-0.3px" }}>Create Invoice</h1>
-          <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>GST Tax Invoice</p>
-        </div>
-      </div>
+   
 
       {/* Company Banner */}
       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>

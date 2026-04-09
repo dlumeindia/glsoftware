@@ -299,10 +299,7 @@ const columns = [
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">All Invoices</h1>
-          <p className="text-sm text-gray-400">Manage all your invoices in one place.</p>
-        </div>
+      
         <Button variant="navy" size="md" className="flex items-center gap-2" onClick={() => navigate("/create-invoice")}>
           <FiPlus size={16} /> Create Invoice
         </Button>

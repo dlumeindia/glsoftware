@@ -4,6 +4,7 @@ const Input = ({
   label,
   icon: Icon,
   rightIcon: RightIcon,
+  onRightIconClick,
   error,
   size = "md",
   as = "input",
@@ -52,7 +53,10 @@ const Input = ({
         )}
 
         {RightIcon && (
-          <RightIcon className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer text-lg" />
+          <RightIcon
+            onClick={onRightIconClick}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer text-lg hover:text-gray-600 transition-colors duration-200"
+          />
         )}
       </div>
 

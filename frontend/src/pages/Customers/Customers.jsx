@@ -196,69 +196,63 @@ if (!form.customer_name.trim())
     if (!form.customer_address_line1.trim()) e.customer_address_line1 = "Address is required";
     if (!form.customer_city.trim()) e.customer_city = "City is required";
     if (!form.customer_state) e.customer_state = "State is required";
-    if (!validatePincode(form.customer_pincode)) e.customer_pincode = "Invalid pincode";
+if (form.customer_pincode && !validatePincode(form.customer_pincode))
+  e.customer_pincode = "Invalid pincode";
     return e;
   };
 
 
 
-  const handleSave = async () => {
-
+const handleSave = async () => {
   const e = validate();
+
+  // ❌ ERROR CASE
   if (Object.keys(e).length) {
     setErrors(e);
-     alert("✅ Customer saved successfully!");
+
+    const messages = Object.values(e).join("\n");
+    alert("❌ Please fix the following:\n\n" + messages);
+
     return;
   }
 
   try {
+    const payload = { ...form };
 
-  const payload = { ...form };
+    if (form.same_as_billing) {
+      payload.shipping_address_line1 = form.customer_address_line1;
+      payload.shipping_address_line2 = form.customer_address_line2;
+      payload.shipping_city = form.customer_city;
+      payload.shipping_state = form.customer_state;
+      payload.shipping_state_code = form.customer_state_code;
+      payload.shipping_pincode = form.customer_pincode;
+    }
 
-  if (form.same_as_billing) {
-    payload.shipping_address_line1 = form.customer_address_line1;
-    payload.shipping_address_line2 = form.customer_address_line2;
-    payload.shipping_city = form.customer_city;
-    payload.shipping_state = form.customer_state;
-    payload.shipping_state_code = form.customer_state_code;
-    payload.shipping_pincode = form.customer_pincode;
-  }
-
-  delete payload.same_as_billing;
-  // payload.same_as_billing = form.same_as_billing ?? 0;
+    delete payload.same_as_billing;
 
     await window.electronAPI.saveCustomer(payload);
 
-    setSubmitted(true);
+    // ✅ SUCCESS ALERT
+    alert("✅ Customer saved successfully!");
+
+    // ✅ RESET FORM
     setForm(emptyForm);
+    setErrors({});
+    setSubmitted(true);
 
   } catch (err) {
     console.error(err);
+
+    // ❌ API ERROR (optional but good)
+    alert("❌ Failed to save customer. Please try again.");
   }
 };
-
   const grid2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
 
   return (
     <div style={{ width: "100%", margin: "0" }}>
 
-      {/* Top Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#0b1324", letterSpacing: "-0.3px" }}>
-            Add Customer
-          </h1>
-          <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>
-            Create a new customer record
-          </p>
-        </div>
-        {submitted && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "10px 16px" }}>
-            <span style={{ fontSize: "16px" }}>✅</span>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#16a34a" }}>Customer saved successfully!</span>
-          </div>
-        )}
-      </div>
+    
 
     
 {/* Basic Info */}
@@ -367,7 +361,7 @@ if (!form.customer_name.trim())
           <Field label="State Code">
             <TextInput value={form.customer_state_code} readOnly onChange={() => {}}  />
           </Field>
-          <Field label="Pincode" required>
+          <Field label="Pincode" >
             <TextInput value={form.customer_pincode}
               onChange={(e) => update("customer_pincode", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
                />
