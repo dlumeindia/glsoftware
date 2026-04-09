@@ -188,7 +188,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
       <Field label={customerType === "B2B" ? "Company / Name" : "Company Name"} required={fieldRules.company_name}>
-        <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)}/>
+        <TextInput value={form.customer_name} onChange={(e) => update("customer_name", e.target.value)}/>
       </Field>
       <Field label="Email" required={fieldRules.customer_email} hint={!fieldRules.customer_email ? "optional" : undefined}>
         <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="billing@company.com" />
@@ -287,13 +287,66 @@ const [customerModal, setCustomerModal] = useState(false);
           setProfile(data);
         }
       };
+
+      const loadInvoiceNo = async () => {
+         const res = await window.electronAPI.getInvoiceNo();
+        if (res) {
+          setInvoiceNo(res.data);
+        }
+
+      }
       loadProfile();
+      loadInvoiceNo();
   
     }, []);
 
   const filteredCusts = customers.filter((c) =>
-    c.company_name.toLowerCase().includes(custSearch.toLowerCase())
+    c.customer_name.toLowerCase().includes(custSearch.toLowerCase())
   );
+
+   const resetForm = async () => {
+    setSelectedCustomer(null);
+    setCustomerID(null);
+    setCustSearch("");
+    setShowCustDropdown(false);
+
+    setBillForm({ ...emptyAddress });
+    setShipForm({ ...emptyAddress });
+    setSameAsBilling(false);
+
+    setCustomerType("B2C");
+
+    setItems([
+      {
+        description: "",
+        itemCode: "",
+        hsn: "",
+        qty: 1,
+        rate: 0,
+        discount: 0,
+        unit: "NOS",
+        gstRate: 18,
+      },
+    ]);
+
+    setEwayEnabled(false);
+    setDocType("");
+    setApproximateDistance("");
+    setTransporterName("");
+    setTransporterDocNo("");
+    setVehicleNo("");
+    setFrom("");
+
+    setRevCharge("no");
+    setSupplyType("Outward");
+    setSubSupplyType("Supply");
+
+    setInvoiceDate(new Date().toISOString().split("T")[0]);
+     const res = await window.electronAPI.getInvoiceNo();
+        if (res) {
+          setInvoiceNo(res.data);
+        }
+  };
 
   const handleSaveInvoice = async () => {
   try {
@@ -332,15 +385,16 @@ const [customerModal, setCustomerModal] = useState(false);
       customerID,
     };
 
+
     console.log("📤 Sending to backend:", data);
 
     const res = await window.electronAPI.saveInvoice(data);
 
     if (res?.success) {
-      alert(`✅ Invoice Saved (ID: ${res.invoiceId})`);
+      alert(`✅ Invoice Saved (ID: ${res.data.invoice_no})`);
       
       // Optional: Reset form
-      // resetForm();
+      resetForm();
     } else {
       alert("❌ Failed to save invoice");
     }
@@ -483,7 +537,7 @@ const totalDiscount = items.reduce((s, item) => {
       <Section title="Invoice Details" icon="🧾">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
           <Field label="Invoice No" required>
-            <TextInput value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="INV-2526-001" />
+            <TextInput value={invoiceNo} readOnly={true} placeholder="INV-2526-001" />
           </Field>
           <Field label="Invoice Date" required>
             <TextInput type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
@@ -518,7 +572,7 @@ const totalDiscount = items.reduce((s, item) => {
                   style={{ ...inputStyle, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
                 >
                   <span style={{ color: selectedCustomer ? "#111827" : "#9ca3af" }}>
-                    {selectedCustomer ? selectedCustomer.company_name : "Search & select customer..."}
+                    {selectedCustomer ? selectedCustomer.customer_name : "Search & select customer..."}
                   </span>
                   <span style={{ fontSize: "10px", color: "#6b7280" }}>▼</span>
                 </div>
@@ -533,7 +587,7 @@ const totalDiscount = items.reduce((s, item) => {
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
                           onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
                         >
-                          <div style={{ fontWeight: 600, color: "#111827" }}>{c.company_name}</div>
+                          <div style={{ fontWeight: 600, color: "#111827" }}>{c.customer_name}</div>
                           <div style={{ fontSize: "11px", color: "#6b7280" }}>{c.customer_gstin}</div>
                         </div>
                       ))}
@@ -693,12 +747,9 @@ const totalDiscount = items.reduce((s, item) => {
               {items.map((item, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
                   <td style={{ padding: "8px 10px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
-                  <td style={{ padding: "5px 6px", minWidth: "160px" }}>
+                  <td style={{ padding: "5px 6px", minWidth: "100px" }}>
                     <input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
-                  </td>
-                  <td style={{ padding: "5px 6px", width: "100px" }}>
-                    <input value={item.itemCode} onChange={(e) => updateItem(i, "itemCode", e.target.value)} placeholder="Code" style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
-                  </td>
+                  </td>                
                   <td style={{ padding: "5px 6px", width: "80px" }}>
                     <input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
                   </td>
@@ -707,7 +758,7 @@ const totalDiscount = items.reduce((s, item) => {
                       {units.map((u) => <option key={u}>{u}</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: "5px 6px", width: "65px" }}>
+                  <td style={{ padding: "5px 6px", width: "80px" }}>
                   <input type="number" value={item.qty || ""}onChange={(e) =>
   updateItem(i, "qty", e.target.value === "" ? "" : Number(e.target.value))
 }style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />

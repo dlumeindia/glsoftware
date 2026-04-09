@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   deleteCust: (id) => ipcRenderer.invoke("delete-customer", id),
   getCustomerById: (id) => ipcRenderer.invoke("get-customer-by-id", id),
   updateCustomer: (data) => ipcRenderer.invoke("update-customer", data),
+  getInvoiceNo: (data) => ipcRenderer.invoke("get-invoiceNo", data),
   saveInvoice: (data) => ipcRenderer.invoke("save-invoice", data),
   updateInvoice: (data) => ipcRenderer.invoke("update-invoice", data),
   getInvoices: (data) => ipcRenderer.invoke("get-invoices", data),
