@@ -265,9 +265,7 @@ const [customerModal, setCustomerModal] = useState(false);
   const [shipForm, setShipForm] =useState({ ...emptyAddress });
   const [sameAsBilling, setSameAsBilling] =useState(false);
 
-   useEffect(() => {
-      loadCustomers();
-    }, []);
+   
   
     const loadCustomers = async () => {
       const res = await window.electronAPI.getCustomers();
@@ -279,6 +277,10 @@ const [customerModal, setCustomerModal] = useState(false);
         console.error(res.error);
       }
     };
+
+    useEffect(() => {
+      loadCustomers();
+    }, []);
 
      useEffect(() => {
       const loadProfile = async () => {
