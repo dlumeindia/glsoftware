@@ -25,10 +25,19 @@ const columns = [
     ),
   },
   {
+    key: "company_name",
+    label: "Company",
+    render: (value) => (
+      <div className="text-gray-600 text-sm">{value || "—"}</div>
+    ),
+  },
+  {
     key: "amount",
     label: "Amount",
     render: (value) => (
-      <span className="font-semibold text-gray-800">₹{Number(value).toFixed(2)}</span>
+      <span className="font-semibold text-gray-800">
+        ₹{Number(value).toFixed(2)}
+      </span>
     ),
   },
   {
@@ -47,7 +56,6 @@ const columns = [
     ),
   },
 ];
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -78,12 +86,13 @@ const Dashboard = () => {
     
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          value={`${Number(stats.totalInvoices)}`}
-          icon={HiOutlineDocumentText}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-600"
-        />
+      <StatCard
+  title="Total Invoices"
+  value={`${Number(stats.totalInvoices)}`}
+  icon={HiOutlineDocumentText}
+  iconBg="bg-blue-100"
+  iconColor="text-blue-600"
+/>
         <StatCard
           title="Total Paid"
           value={`₹${Number(stats.totalPaid).toFixed(2)}`}

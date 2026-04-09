@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import { useEffect } from "react";
+import { useContext } from "react";
+import { PageTitleContext } from "../../layout/MainLayout"; 
+
 
 const indianStates = [
   { code: "01", name: "Jammu & Kashmir" }, { code: "02", name: "Himachal Pradesh" },
@@ -23,7 +26,6 @@ const indianStates = [
 ];
 
 const businessTypes = ["Proprietorship", "Partnership", "LLP", "Private Limited", "Public Limited", "OPC", "Trust", "HUF", "Other"];
-const customerTypes = ["Regular", "Composition", "Consumer", "Overseas", "SEZ", "Deemed Export"];
 
 const inputStyle = {
   width: "100%",
@@ -129,7 +131,6 @@ function ErrorMsg({ field, errors }) {
 }
 
 function Row({ label, value, mono }) {
-  if (!value) return null;
   return (
     <div style={{ display: "flex", alignItems: "flex-start", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
       <span style={{
@@ -139,19 +140,41 @@ function Row({ label, value, mono }) {
       }}>
         {label}
       </span>
+
       <span style={{
-        fontSize: "13.5px", color: "#111827", fontWeight: 500,
+        fontSize: "13.5px",
+        color: value ? "#111827" : "#9ca3af",
+        fontWeight: 500,
         fontFamily: mono ? "monospace" : "inherit",
         letterSpacing: mono ? "0.06em" : "normal",
         lineHeight: "1.4",
       }}>
-        {value}
+        {value || "—"}
       </span>
     </div>
   );
 }
 
 function ProfileView({ c, onEdit, onBack }) {
+
+const billingAddress = [
+  c.customer_address_line1,
+  c.customer_address_line2,
+  c.customer_city,
+  c.customer_state,
+  c.customer_pincode
+].filter(Boolean).join(", ");
+
+const shippingAddress = c.same_as_billing
+  ? billingAddress
+  : [
+      c.shipping_address_line1,
+      c.shipping_address_line2,
+      c.shipping_city,
+      c.shipping_state,
+      c.shipping_pincode
+    ].filter(Boolean).join(", ");
+
   const row2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" };
 
   return (
@@ -179,20 +202,7 @@ function ProfileView({ c, onEdit, onBack }) {
             <FiArrowLeft size={15} /> Back
           </button>
 
-          {/* Avatar + Name */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1e3a5f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: 800, flexShrink: 0, letterSpacing: "0.05em" }}>
-              {getInitials(c.customer_name)}
-            </div>
-            <div>
-              <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>
-                {c.customer_name}
-              </h1>
-              {c.company_name && (
-                <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{c.company_name}</p>
-              )}
-            </div>
-          </div>
+        
 
       
         </div>
@@ -208,7 +218,7 @@ function ProfileView({ c, onEdit, onBack }) {
           <div style={{ display: "flex", flexDirection: "column" }}>
             <Row label="Customer Name" value={c.customer_name} />
             <Row label="Company Name" value={c.company_name} />
-            <Row label="Customer Type" value={c.customer_type} />
+          
             <Row label="Business Type" value={c.business_type} />
           </div>
         </Section>
@@ -233,34 +243,13 @@ function ProfileView({ c, onEdit, onBack }) {
 
       {/* Billing + Shipping — side by side */}
       <div style={row2}>
-        <Section title="Billing Address" icon="📍">
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <Row label="Address Line 1" value={c.customer_address_line1} />
-            {c.customer_address_line2 && <Row label="Address Line 2" value={c.customer_address_line2} />}
-            <Row label="City" value={c.customer_city} />
-            <Row label="State" value={c.customer_state} />
-            <Row label="State Code" value={c.customer_state_code} />
-            <Row label="Pincode" value={c.customer_pincode} />
-          </div>
-        </Section>
+      <Section title="Billing Address" icon="📍">
+  <Row label="Full Address" value={billingAddress} />
+</Section>
 
-        <Section title="Shipping Address" icon="🚚">
-          {c.same_as_billing ? (
-            <div style={{ background: "#f0f9ff", border: "1.5px solid #bae6fd", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#0369a1", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>ℹ️</span>
-              <span style={{ fontWeight: 500 }}>Same as Billing Address</span>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <Row label="Address Line 1" value={c.shipping_address_line1} />
-              {c.shipping_address_line2 && <Row label="Address Line 2" value={c.shipping_address_line2} />}
-              <Row label="City" value={c.shipping_city} />
-              <Row label="State" value={c.shipping_state} />
-              <Row label="State Code" value={c.shipping_state_code} />
-              <Row label="Pincode" value={c.shipping_pincode} />
-            </div>
-          )}
-        </Section>
+     <Section title="Shipping Address" icon="🚚">
+  <Row label="Full Address" value={shippingAddress} />
+</Section>
       </div>
 
     </div>
@@ -325,9 +314,7 @@ function EditForm({ customer, onSave, onCancel }) {
           <Field label="Company Name">
             <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)} placeholder="ABC Industries Pvt Ltd" />
           </Field>
-          <Field label="Customer Type">
-            <SelectInput value={form.customer_type} onChange={(e) => update("customer_type", e.target.value)} placeholder="Select Type" options={customerTypes.map((t) => ({ value: t, label: t }))} />
-          </Field>
+       
           <Field label="Business Type">
             <SelectInput value={form.business_type} onChange={(e) => update("business_type", e.target.value)} placeholder="Select Business Type" options={businessTypes.map((t) => ({ value: t, label: t }))} />
           </Field>
@@ -439,7 +426,10 @@ function EditForm({ customer, onSave, onCancel }) {
   );
 }
 
+
+
 export default function CustomerProfile() {
+  const setTitle = useContext(PageTitleContext);
   const { id } = useParams();
   const navigate = useNavigate();
   const [mode, setMode] = useState("profile");
@@ -460,38 +450,53 @@ export default function CustomerProfile() {
 
     fetchCustomer();
   }, [id]);
-  // const [customer, setCustomer] = useState(sampleCustomer);
-  const [toast, setToast] = useState(false);
 
-  const handleSave = async (updated) => {
-    try {
-      const res = await window.electronAPI.updateCustomer(updated);
+useEffect(() => {
+  const fetchCustomer = async () => {
+    const res = await window.electronAPI.getCustomerById(id);
 
-      if (res.success) {
-        setCustomer(updated);
-        setMode("profile");
-        setToast(true);
-        setTimeout(() => setToast(false), 3000);
-      } else {
-        console.error(res.error);
-      }
-    } catch (err) {
-      console.error("Save error:", err);
+    if (res.success) {
+      setCustomer(res.data);
+
+      // 🔥 SET TOPBAR HERE
+      setTitle({
+        title: res.data.customer_name,
+        subtitle: res.data.company_name || "Customer Details",
+      });
+
+    } else {
+      console.error(res.error);
     }
   };
+
+  fetchCustomer();
+}, [id]);
+
+
+const handleSave = async (updated) => {
+  try {
+    const res = await window.electronAPI.updateCustomer(updated);
+
+    if (res.success) {
+      setCustomer(updated);
+      setMode("profile");
+
+      alert("✅ Customer updated successfully");
+
+    } else {
+      alert("❌ Failed to update customer");
+    }
+  } catch (err) {
+    console.error("Save error:", err);
+    alert("❌ Something went wrong");
+  }
+};
 
   if (!customer) return <div>Loading...</div>;
 
   return (
     <div style={{ width: "100%" }}>
-      {toast && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "10px 16px" }}>
-            <span style={{ fontSize: "16px" }}>✅</span>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#16a34a" }}>Customer saved successfully!</span>
-          </div>
-        </div>
-      )}
+    
       {mode === "profile"
         ? <ProfileView c={customer} onEdit={() => setMode("edit")} onBack={() => navigate(-1)} />
         : <EditForm customer={customer} onSave={handleSave} onCancel={() => setMode("profile")} />

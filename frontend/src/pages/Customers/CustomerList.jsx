@@ -9,7 +9,7 @@ const columns = [
 { key: "customer_name", label: "Customer Name" },
 { key: "company_name", label: "Company" },
 { key: "customer_gstin", label: "GSTIN" },
-{ key: "customer_address_line1", label: "Address" },
+{ key: "full_address", label: "Billing Address" },
 { key: "customer_phone", label: "Phone" },
 
 
@@ -25,15 +25,27 @@ const navigate = useNavigate();
   }, []);
 
   const loadCustomers = async () => {
-    const res = await window.electronAPI.getCustomers();
-    console.log(res);
+  const res = await window.electronAPI.getCustomers();
 
-    if (res.success) {
-      setCustomers(res.data);
-    } else {
-      console.error(res.error);
-    }
-  };
+  if (res.success) {
+    const formatted = res.data.map((c) => ({
+      ...c,
+      full_address: [
+        c.customer_address_line1,
+        c.customer_address_line2,
+        c.customer_city,
+        c.customer_state,
+        c.customer_pincode
+      ]
+        .filter(Boolean)
+        .join(", ")
+    }));
+
+    setCustomers(formatted);
+  } else {
+    console.error(res.error);
+  }
+};
 
 return ( <div className="space-y-6">
 
@@ -58,15 +70,22 @@ return ( <div className="space-y-6">
   data={customers}
   searchPlaceholder="Search customers..."
   onRowClick={(row) => navigate(`/customers/${row.id}`)}
-  onDelete={async (row) => {
-    
+onDelete={async (row) => {
+  const confirmDelete = window.confirm(
+    `Delete customer "${row.customer_name}"?`
+  );
 
-    const res = await window.electronAPI.deleteCust(row.id);
+  if (!confirmDelete) return;
 
-    if (res.success) {
-      loadCustomers();
-    }
-  }}
+  const res = await window.electronAPI.deleteCust(row.id);
+
+  if (res.success) {
+    alert("✅ Customer deleted successfully");
+    loadCustomers();
+  } else {
+    alert("❌ Failed to delete customer");
+  }
+}}
 />
 
 </div>
