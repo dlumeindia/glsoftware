@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { FiPrinter, FiShare2, FiArrowLeft, FiFileText, FiDownload } from "react-icons/fi";
 import Logo from "../../assets/logo.svg";
 
@@ -197,7 +198,7 @@ const AddressBlock = ({ form, update, title, grid3 }) => (    <div>
   );
 
 // ─── Edit Invoice Form ──────────────────────────────────────────────────────
-function EditInvoiceForm({ invoice, customer, items, onSave, onCancel }) {
+function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
   const emptyAddress = {
     company_name: "", gstin: "", pan: "", address_line1: "", address_line2: "",
     city: "", state: "", state_code: "", pincode: "", email: "", phone: "",
@@ -217,7 +218,7 @@ function EditInvoiceForm({ invoice, customer, items, onSave, onCancel }) {
   };
 
   const gstOptions = [0, 5, 12, 18, 28];
-
+  
   const [invoiceNo, setInvoiceNo] = useState(invoice.invoice_no);
   const [itemsState, setItems] = useState(items || []);
   const [invoiceDate, setInvoiceDate] = useState(invoice.invoice_date);
@@ -378,6 +379,8 @@ function EditInvoiceForm({ invoice, customer, items, onSave, onCancel }) {
       }
     };
 
+ 
+
   
 
   const grid3 = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" };
@@ -407,16 +410,17 @@ function EditInvoiceForm({ invoice, customer, items, onSave, onCancel }) {
       </div>
 
       {/* Company Banner */}
-      <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
+       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
           <div>
-            <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{businessInfo.name}</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{businessInfo.address}</div>
-            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{businessInfo.email} · {businessInfo.phone}</div>
+            <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
+            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
+            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer state Code : {profile?.state_code}</div>
+            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{profile?.email} · {profile?.phone}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px", letterSpacing: "0.05em" }}>GSTIN</div>
-            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{businessInfo.gst}</div>
+            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{profile?.gstin}</div>
           </div>
         </div>
       </div>
@@ -670,6 +674,9 @@ function EditInvoiceForm({ invoice, customer, items, onSave, onCancel }) {
 export default function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+   const { user } = useAuth();  
+    const [profile, setProfile] = useState();
+
 
   // ── Added: mode & invoice state for edit toggle ──
   const [mode, setMode] = useState("view");
@@ -690,6 +697,17 @@ const [items, setItems] = useState([]);
       });
     }
   }, [id]);
+
+   useEffect(() => {
+    const loadProfile = async () => {
+      const data = await window.electronAPI.getProfile(user.id);
+      if (data) {
+        setProfile(data);
+      }
+    };
+    loadProfile();
+
+  }, []);
 
   const handleSave = (updated) => {
     setInvoice(updated);
@@ -813,7 +831,7 @@ const [items, setItems] = useState([]);
 
   // ── Edit mode: render edit form ──
   if (mode === "edit") {
-    return <EditInvoiceForm invoice={invoice} customer={customer} items={items} onSave={handleSave} onCancel={() => setMode("view")} />;
+    return <EditInvoiceForm invoice={invoice} profile={profile} items={items} onSave={handleSave} onCancel={() => setMode("view")} />;
   }
 
   // ── View mode: 100% original code, zero changes ──
@@ -831,10 +849,9 @@ const [items, setItems] = useState([]);
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount + Number(0);
 
-  const isInter = invoice.ship_state_code == businessInfo.state_code;
+  const isInter = invoice.ship_state_code == profile?.state_code;
   console.log(isInter);
   console.log(invoice.ship_state_code);
-  console.log(businessInfo.state_code);
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
@@ -924,7 +941,7 @@ const [items, setItems] = useState([]);
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                   <img
-                    src={LogoBase64}
+                    src={profile?.header_image}
                     alt="Logo"
                     style={{
                       width: "60px",
@@ -932,17 +949,17 @@ const [items, setItems] = useState([]);
                       maxHeight: "60px",
                       objectFit: "contain"
                     }}
-                  />                <div>
-                  <div style={{ fontSize: "20px", fontWeight: 900, color: "#1e3a5f", letterSpacing: "0.5px" }}>{businessInfo.name}</div>
-                  <div style={{ fontSize: "11px", color: "#6b7280", maxWidth: "380px", lineHeight: "1.3", marginTop: "2px" }}>{businessInfo.address}</div>
-                  <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "1px" }}>State Code: <strong>{businessInfo.state_code}</strong></div>
-                  <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "1px" }}>{businessInfo.email} | {businessInfo.phone}</div>
+                  />              <div>
+                  <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
+                  <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
+                  <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer state Code : {profile?.state_code}</div>
+                  <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{profile?.email} · {profile?.phone}</div>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px", letterSpacing: "0.06em", textTransform: "uppercase" }}>GSTIN/UIN</div>
-                <div style={{ fontSize: "13px", fontWeight: 800, color: "#1e3a5f", fontFamily: "monospace", letterSpacing: "1px" }}>{businessInfo.gst}</div>
-              </div>
+            <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px", letterSpacing: "0.05em" }}>GSTIN</div>
+            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{profile?.gstin}</div>
+          </div>
             </div>
           </div>
 
@@ -961,22 +978,22 @@ const [items, setItems] = useState([]);
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Billing Address
               </div>
-              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{customer.company_name}</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.bill_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {customer.address_line1}
-                {customer.address_line2 && <>, {customer.address_line2}</>}
-                <br />{customer.city}, {customer.state}, India
-                <br />Pincode: {customer.pincode}
-                {customer.place_of_supply && (
+                {invoice.bill_address1}
+                {invoice.bill_address2 && <>, {invoice.bill_address2}</>}
+                <br />{invoice.bill_city}, {invoice.bill_state}, India
+                <br />Pincode: {invoice.bill_pincode}
+                {invoice.bill_state && (
                   <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "2px" }}>
-                    State Code : <strong> {customer.place_of_supply_code}</strong>
+                    State Code : <strong> {invoice.bill_state_code}</strong>
                   </div>
                 )}
               </div>
-              {customer.gstin && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "2px" }}>GSTIN: <strong>{customer.gstin}</strong></div>}
-              {customer.pan && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "4px" }}>PAN: <strong>{customer.pan}</strong></div>}
-              {customer.phone && <div style={{ fontSize: "12px", color: "#4b5563", marginTop: "4px" }}>Mo: +91-{customer.phone}</div>}
-              {customer.email && <div style={{ fontSize: "12px", color: "#4b5563" }}>{customer.email}</div>}
+              {customer?.customer_gstin && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "2px" }}>GSTIN: <strong>{customer.customer_gstin}</strong></div>}
+              {customer?.customer_pan && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "4px" }}>PAN: <strong>{customer.customer_pan}</strong></div>}
+              {customer?.customer_phone && <div style={{ fontSize: "12px", color: "#4b5563", marginTop: "4px" }}>Mo: +91-{customer.customer_phone}</div>}
+              {customer?.customer_email && <div style={{ fontSize: "12px", color: "#4b5563" }}>{customer.customer_email}</div>}
             </div>
 
             {/* Shipping Address */}
@@ -986,7 +1003,7 @@ const [items, setItems] = useState([]);
               </div>
               <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.ship_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {invoice.ship_address_line1}
+                {invoice.ship_address1}
                 {invoice.ship_address2 && <>, {invoice.ship_address2}</>}
                 <br />{invoice.ship_city}, {invoice.ship_state}, India
                 <br />Pincode: {invoice.ship_pincode}

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiPrinter, FiShare2, FiArrowLeft, FiDownload } from "react-icons/fi";
 import Logo from "../../assets/logo.svg";
+import { useAuth } from "../../context/AuthContext";
 
 
 
@@ -30,6 +31,8 @@ const MetaRow = ({ label, value }) => (
 export default function DeliveryChallan() {
   const { id } = useParams();
   const navigate = useNavigate();
+   const [profile, setProfile] = useState();
+   const { user } = useAuth();  
    const [invoice, setInvoice] = useState({});
   const [customer, setCustomer] = useState({});
   const [items, setItems] = useState([]);
@@ -51,6 +54,17 @@ export default function DeliveryChallan() {
         });
       }
     }, [id]);
+
+    useEffect(() => {
+      const loadProfile = async () => {
+        const data = await window.electronAPI.getProfile(user.id);
+        if (data) {
+          setProfile(data);
+        }
+      };
+      loadProfile();
+  
+    }, []);
 
   const handleDownloadPDF = async () => {
     const element = document.querySelector(".print-area");
@@ -195,21 +209,29 @@ export default function DeliveryChallan() {
         }}>
 
           {/* ── HEADER ── */}
-          <div style={{ background: "#fff", padding: "20px 28px", borderBottom: "3px solid #1e3a5f" }}>
+           <div style={{ background: "#fff", padding: "20px 28px", borderBottom: "3px solid #1e3a5f" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <img src={Logo} alt="Logo" style={{ width: "60px", height: "60px", objectFit: "contain", borderRadius: "8px" }} />
-                <div>
-                  <div style={{ fontSize: "20px", fontWeight: 900, color: "#1e3a5f", letterSpacing: "0.5px" }}>{businessInfo.name}</div>
-                  <div style={{ fontSize: "11px", color: "#6b7280", maxWidth: "380px", lineHeight: "1.3", marginTop: "2px" }}>{businessInfo.address}</div>
-                  <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "1px" }}>State Code: <strong>{businessInfo.state_code}</strong></div>
-                  <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "1px" }}>{businessInfo.email} | {businessInfo.phone}</div>
+                  <img
+                    src={profile?.header_image}
+                    alt="Logo"
+                    style={{
+                      width: "60px",
+                      height: "auto",
+                      maxHeight: "60px",
+                      objectFit: "contain"
+                    }}
+                  />              <div>
+                  <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
+                  <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
+                  <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer state Code : {profile?.state_code}</div>
+                  <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{profile?.email} · {profile?.phone}</div>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px", letterSpacing: "0.06em", textTransform: "uppercase" }}>GSTIN/UIN</div>
-                <div style={{ fontSize: "13px", fontWeight: 800, color: "#1e3a5f", fontFamily: "monospace", letterSpacing: "1px" }}>{businessInfo.gst}</div>
-              </div>
+            <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px", letterSpacing: "0.05em" }}>GSTIN</div>
+            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{profile?.gstin}</div>
+          </div>
             </div>
           </div>
 

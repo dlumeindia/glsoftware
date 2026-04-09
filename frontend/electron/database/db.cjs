@@ -67,6 +67,7 @@ db.prepare(`
       customer_state TEXT,
       customer_state_code TEXT,
       customer_pincode TEXT,
+      same_as_billing INTEGER DEFAULT 0,
       shipping_address_line1 TEXT,
       shipping_address_line2 TEXT,
       shipping_city TEXT,
@@ -192,7 +193,7 @@ db.prepare(`
   
 
 // db.prepare(`
-//   ALTER TABLE invoices ADD COLUMN customer_id TEXT
+//   ALTER TABLE customers ADD COLUMN same_as_billing INTEGER DEFAULT 0
 // `).run();
 
 // db.prepare(`

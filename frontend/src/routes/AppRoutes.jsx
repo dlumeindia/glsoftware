@@ -4,6 +4,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import Invoices from "../pages/Invoices/Invoices";
 import CreateInvoice from "../pages/Invoices/CreateInvoice";
 import ProtectedRoute from "./ProtectedRoute";
+import PublicRoute from "./PublicRoute";
 import MainLayout from "../layout/MainLayout";
 import Customers from "../pages/Customers/Customers";
 import InvoiceDetail from "../pages/Invoices/InvoiceDetail";
@@ -17,9 +18,24 @@ import SignUp from "../pages/Auth/SignUp";
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Route */}
-      <Route path="/" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
+            {/* Public Route */}
+            <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignUp />
+          </PublicRoute>
+        }
+      />
 
 
       {/* Protected Wrapper */}

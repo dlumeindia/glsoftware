@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
 
 const indiancustomer_states = [
   { code: "01", name: "Jammu & Kashmir" },
@@ -233,8 +232,6 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
 );
 
 export default function CreateInvoice() {
-   const [profile, setProfile] = useState();
-   const { user } = useAuth();  
   const [customers, setCustomers] =useState([]);
   const [invoiceNo, setInvoiceNo] =useState("");
   const [invoiceDate, setInvoiceDate] =useState(new Date().toISOString().split("T")[0]);
@@ -282,17 +279,6 @@ export default function CreateInvoice() {
         console.error(res.error);
       }
     };
-
-     useEffect(() => {
-      const loadProfile = async () => {
-        const data = await window.electronAPI.getProfile(user.id);
-        if (data) {
-          setProfile(data);
-        }
-      };
-      loadProfile();
-  
-    }, []);
 
   const filteredCusts = customers.filter((c) =>
     c.company_name.toLowerCase().includes(custSearch.toLowerCase())
@@ -448,14 +434,14 @@ export default function CreateInvoice() {
       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
           <div>
-            <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer state Code : {profile?.state_code}</div>
-            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{profile?.email} · {profile?.phone}</div>
+            <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{businessInfo.name}</div>
+            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{businessInfo.address},</div>
+            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer_state Code : {businessInfo.customer_state_code}</div>
+            <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{businessInfo.customer_email} · {businessInfo.customer_phone}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: "11px", opacity: 0.7, marginBottom: "2px", letterSpacing: "0.05em" }}>GSTIN</div>
-            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{profile?.gstin}</div>
+            <div style={{ fontSize: "13.5px", fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px" }}>{businessInfo.gst}</div>
           </div>
         </div>
       </div>

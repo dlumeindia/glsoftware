@@ -230,18 +230,13 @@ const handleHeaderUpload = (e) => {
   };
 
   useEffect(() => {
-
     const loadProfile = async () => {
-
       const data = await window.electronAPI.getProfile(user.id);
-
       if (data) {
         setProfile(data);
         setHeaderImage(data.header_image);
       }
-
     };
-
     loadProfile();
 
   }, []);

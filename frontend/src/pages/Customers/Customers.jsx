@@ -214,8 +214,12 @@ if (!form.customer_name.trim())
   try {
 
   const payload = { ...form };
+   delete payload.same_as_billing;
+  payload.same_as_billing =  0;
+
 
   if (form.same_as_billing) {
+    payload.same_as_billing =  1;
     payload.shipping_address_line1 = form.customer_address_line1;
     payload.shipping_address_line2 = form.customer_address_line2;
     payload.shipping_city = form.customer_city;
@@ -224,8 +228,7 @@ if (!form.customer_name.trim())
     payload.shipping_pincode = form.customer_pincode;
   }
 
-  delete payload.same_as_billing;
-  // payload.same_as_billing = form.same_as_billing ?? 0;
+ 
 
     await window.electronAPI.saveCustomer(payload);
 

@@ -31,7 +31,7 @@ function createWindow() {
     win.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
   }
 
-  // win.webContents.openDevTools(); 
+  win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -235,8 +235,9 @@ ipcMain.handle("save-customer", async (event, customer) => {
       shipping_city,
       shipping_state,
       shipping_state_code,
-      shipping_pincode
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      shipping_pincode,
+      same_as_billing
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
 
   
@@ -264,6 +265,7 @@ ipcMain.handle("save-customer", async (event, customer) => {
         safe(customer.shipping_state),
         safe(customer.shipping_state_code),
         safe(customer.shipping_pincode),
+        safe(customer.same_as_billing)
      
     );
 
@@ -355,7 +357,8 @@ ipcMain.handle("update-customer", async (event, data) => {
         shipping_city = ?,
         shipping_state = ?,
         shipping_state_code = ?,
-        shipping_pincode = ?
+        shipping_pincode = ?,
+        same_as_billing = ?
       WHERE id = ?
     `;
 
@@ -382,6 +385,7 @@ ipcMain.handle("update-customer", async (event, data) => {
       data.shipping_state,
       data.shipping_state_code,
       data.shipping_pincode,
+      data.same_as_billing ? 1 : 0,
       data.id,
     ];
 
@@ -398,6 +402,20 @@ ipcMain.handle("save-invoice", async (event, data) => {
   return new Promise((resolve, reject) => {
 
     try {
+      let finalInvoiceNo = 'INV-0001';
+
+       const lastInvoice = db
+        .prepare("SELECT invoice_no FROM invoices ORDER BY id DESC LIMIT 1")
+        .get();
+
+      if (lastInvoice && lastInvoice.invoice_no) {
+        const lastNumber = parseInt(lastInvoice.invoice_no.split("-")[1]) || 0;
+        const nextNumber = lastNumber + 1;
+
+        finalInvoiceNo = `INV-${String(nextNumber).padStart(4, "0")}`;
+      } else {
+        finalInvoiceNo = "INV-0001";
+      }
       const {
         invoiceNo,
         invoiceDate,
@@ -429,8 +447,7 @@ ipcMain.handle("save-invoice", async (event, data) => {
         customerID,
       } = data;
 
-      console.log(billForm);
-      console.log(shipForm);
+      
 
       // ==========================
       // SAFE FUNCTION
@@ -461,7 +478,7 @@ ipcMain.handle("save-invoice", async (event, data) => {
       `);
 
       const result = stmt.run(
-        safe(invoiceNo),
+        safe(finalInvoiceNo),
         safe(invoiceDate),
         safe(paymentTerms),
 
@@ -566,7 +583,6 @@ ipcMain.handle("update-invoice", async (event, data) => {
   try {
     const {
       invoice, 
-      invoiceNo,
       invoiceDate,
       invoiceType,
       supplyType,
@@ -602,7 +618,7 @@ ipcMain.handle("update-invoice", async (event, data) => {
     // ==========================
     const stmt = db.prepare(`
       UPDATE invoices SET
-        invoice_no = ?, invoice_date = ?, invoice_type = ?,
+        invoice_date = ?, invoice_type = ?,
         supply_type = ?, sub_supply_type = ?, reverse_charge = ?, 
 
         bill_company_name = ?, bill_gstin = ?, bill_pan = ?, bill_email = ?, bill_phone = ?,
@@ -623,7 +639,6 @@ ipcMain.handle("update-invoice", async (event, data) => {
     `);
 
     stmt.run(
-      safe(invoiceNo),
       safe(invoiceDate),
       safe(invoiceType),
 
