@@ -31,7 +31,7 @@ function createWindow() {
     win.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
   }
 
-  // win.webContents.openDevTools(); 
+  win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -401,24 +401,42 @@ ipcMain.handle("update-customer", async (event, data) => {
   }
 });
 
+
+ipcMain.handle("get-invoiceNo", async () => {
+  try {
+    let finalInvoiceNo = 'INV-0001';
+
+      const lastInvoice = db
+      .prepare("SELECT invoice_no FROM invoices ORDER BY id DESC LIMIT 1")
+      .get();
+
+    if (lastInvoice && lastInvoice.invoice_no) {
+      const lastNumber = parseInt(lastInvoice.invoice_no.split("-")[1]) || 0;
+      const nextNumber = lastNumber + 1;
+
+      finalInvoiceNo = `INV-${String(nextNumber).padStart(4, "0")}`;
+    } else {
+      finalInvoiceNo = "INV-0001";
+    }
+
+    return {
+      success: true,
+      data: finalInvoiceNo,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      success: false,
+      error: err.message,
+    };
+  }
+});
+
 ipcMain.handle("save-invoice", async (event, data) => {
   return new Promise((resolve, reject) => {
 
     try {
-      let finalInvoiceNo = 'INV-0001';
-
-       const lastInvoice = db
-        .prepare("SELECT invoice_no FROM invoices ORDER BY id DESC LIMIT 1")
-        .get();
-
-      if (lastInvoice && lastInvoice.invoice_no) {
-        const lastNumber = parseInt(lastInvoice.invoice_no.split("-")[1]) || 0;
-        const nextNumber = lastNumber + 1;
-
-        finalInvoiceNo = `INV-${String(nextNumber).padStart(4, "0")}`;
-      } else {
-        finalInvoiceNo = "INV-0001";
-      }
+      
       const {
         invoiceNo,
         invoiceDate,
@@ -449,6 +467,8 @@ ipcMain.handle("save-invoice", async (event, data) => {
         from,
         customerID,
       } = data;
+
+
 
       
 
@@ -481,7 +501,7 @@ ipcMain.handle("save-invoice", async (event, data) => {
       `);
 
       const result = stmt.run(
-        safe(finalInvoiceNo),
+        safe(invoiceNo),
         safe(invoiceDate),
         safe(paymentTerms),
 
@@ -490,7 +510,7 @@ ipcMain.handle("save-invoice", async (event, data) => {
         safe(revCharge),
         safe(customerType),
 
-        safe(billForm.company_name),
+        safe(billForm.customer_name),
         safe(billForm.customer_gstin),
         safe(billForm.customer_pan),
         safe(billForm.customer_email),
@@ -569,9 +589,14 @@ ipcMain.handle("save-invoice", async (event, data) => {
         );
       });
 
+
+       const invoice = db
+    .prepare("SELECT invoice_no FROM invoices WHERE id = ?")
+    .get(invoiceId);
+
       resolve({
         success: true,
-        id: invoiceId,
+        data: invoice,
       });
 
     } catch (error) {
@@ -865,7 +890,6 @@ ipcMain.handle("generate-pdf", async (event, { fileext, html }) => {
     // Wait for render
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Save dialog
     const { canceled, filePath } = await dialog.showSaveDialog({
       defaultPath: `${fileext}-${Date.now()}.pdf`,
       filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -897,7 +921,6 @@ ipcMain.handle("download-pdf", async (event) => {
   try {
     const win = BrowserWindow.fromWebContents(event.sender);
 
-    // Save dialog
     const { canceled, filePath } = await dialog.showSaveDialog(win, {
       defaultPath: `Invoice-${Date.now()}.pdf`,
       filters: [{ name: "PDF Files", extensions: ["pdf"] }],
