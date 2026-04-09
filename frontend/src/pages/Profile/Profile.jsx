@@ -245,18 +245,7 @@ const handleHeaderUpload = (e) => {
   return (
     <div style={{ width: "100%", margin: "0", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
-      {/* Top Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#0b1324", letterSpacing: "-0.3px" }}>
-            Business Profile
-          </h1>
-          <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>
-            Manage your business identity, bank details & invoice defaults
-          </p>
-        </div>
-        <SavedBadge show={saved} />
-      </div>
+    
 
       {/* Company Banner */}
       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
@@ -314,7 +303,10 @@ const handleHeaderUpload = (e) => {
             
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
               <Field label="Business / Trade Name" required>
-                <TextInput value={profile.business_name} onChange={e => update("business_name", e.target.value)} placeholder="Your Company Name" />
+                <TextInput value={profile.business_name} onChange={e => update("business_name", e.target.value)}  />
+              </Field>
+               <Field label="Customer Name" required>
+                <TextInput value={profile.customer_name} onChange={e => update("customer_name", e.target.value)}  />
               </Field>
               <Field label="Business Type">
                 <SelectInput value={profile.business_type} onChange={e => update("business_type", e.target.value)}
@@ -340,7 +332,7 @@ const handleHeaderUpload = (e) => {
               <Field label="Mobile Number" required>
                 <CharBoxInput length={10} value={profile.phone} onChange={val => update("phone", val)} numeric />
               </Field>
-              <Field label="Email Address" required>
+              <Field label="Email Address" >
                 <TextInput type="email" value={profile.email} onChange={e => update("email", e.target.value)}  />
               </Field>
               <Field label="Website">
@@ -497,16 +489,16 @@ const handleHeaderUpload = (e) => {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <Field label="Bank Name" required>
+            <Field label="Bank Name" >
               <TextInput value={profile.bank_name} onChange={e => update("bank_name", e.target.value)}  />
             </Field>
-            <Field label="Branch Name" required>
+            <Field label="Branch Name" >
               <TextInput value={profile.branch} onChange={e => update("branch", e.target.value)}  />
             </Field>
-            <Field label="Account Number" required>
+            <Field label="Account Number" >
               <TextInput value={profile.account_no} onChange={e => update("account_no", e.target.value)}  />
             </Field>
-            <Field label="IFSC Code" required>
+            <Field label="IFSC Code" >
               <TextInput value={profile.ifsc} onChange={e => update("ifsc", e.target.value.toUpperCase())} />
             </Field>
             <Field label="Account Type">
@@ -540,25 +532,7 @@ const handleHeaderUpload = (e) => {
       {/* ─── TAB: INVOICE DEFAULTS ─── */}
       {activeTab === "invoice" && (
         <>
-          <Section title="Invoice Numbering" icon="🔢">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
-              <Field label="Invoice Prefix" required>
-                <TextInput value={profile.invoice_prefix} onChange={e => update("invoice_prefix", e.target.value.toUpperCase())} placeholder="INV" />
-              </Field>
-              <Field label="Financial Year Series" required>
-                <TextInput value={profile.invoice_series} onChange={e => update("invoice_series", e.target.value)} placeholder="2526" />
-              </Field>
-              <Field label="Preview">
-                <div style={{
-                  ...inputStyle, background: "#f8fafc", color: "#1e3a5f",
-                  fontWeight: 700, fontFamily: "monospace", letterSpacing: "1px",
-                  cursor: "default",
-                }}>
-                  {profile.invoice_prefix || "INV"}-{profile.invoice_series || "2526"}-001
-                </div>
-              </Field>
-            </div>
-          </Section>
+         
 
         
 
