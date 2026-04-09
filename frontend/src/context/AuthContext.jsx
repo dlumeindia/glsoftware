@@ -21,6 +21,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+      const confirmLogout = window.confirm(
+    "⚠️ Are you sure you want to logout?"
+  );
+
+  if (!confirmLogout) return;
     localStorage.removeItem("user");
     localStorage.removeItem("token");
 

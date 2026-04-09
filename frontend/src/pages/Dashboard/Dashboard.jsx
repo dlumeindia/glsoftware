@@ -1,73 +1,60 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import StatCard from "../../components/StatCard";
-import Card from "../../components/Card";
 import Table from "../../components/Table";
 import {
-HiOutlineDocumentText,
-HiOutlineCurrencyDollar,
+  HiOutlineDocumentText,
+  HiOutlineCurrencyDollar,
 } from "react-icons/hi";
 
-// const recentInvoices = [
-// {
-// id: 1,
-// number: "INV-1004",
-// client: "AlphaWorks Ltd",
-// amount: "$2510.00",
-// dueDate: "Sep 30, 2025",
-// status: "Paid",
-// },
-// {
-// id: 2,
-// number: "INV-1005",
-// client: "BetaForge Inc",
-// amount: "$1855.00",
-// dueDate: "Sep 30, 2025",
-// status: "Unpaid",
-// },
-// {
-// id: 3,
-// number: "INV-1002",
-// client: "John",
-// amount: "$5426.33",
-// dueDate: "Sep 11, 2025",
-// status: "Paid",
-// },
-// ];
-
 const columns = [
-{
-key: "client",
-label: "Client",
-render: (value, row) => ( <div> <div className="font-medium text-gray-800">{value}</div> <div className="text-gray-400 text-xs">#{row.number}</div> </div>
-),
-},
-{ key: "amount", label: "Amount" },
-{
-key: "status",
-label: "Status",
-render: (value) => (
-<span
-className={`px-3 py-1 rounded-full text-xs font-medium ${
+  {
+    key: "number",
+    label: "Invoice Number",
+    render: (value) => (
+      <span className="font-mono text-sm font-medium text-gray-700">
+        #{value}
+      </span>
+    ),
+  },
+  {
+    key: "client",
+    label: "Client",
+    render: (value) => (
+      <div className="font-medium text-gray-800">{value}</div>
+    ),
+  },
+  {
+    key: "amount",
+    label: "Amount",
+    render: (value) => (
+      <span className="font-semibold text-gray-800">₹{Number(value).toFixed(2)}</span>
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (value) => (
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-medium ${
           value === "Paid"
             ? "bg-green-100 text-green-700"
             : "bg-red-100 text-red-600"
         }`}
->
-{value} </span>
-),
-},
-{ key: "dueDate", label: "Due Date" },
+      >
+        {value}
+      </span>
+    ),
+  },
 ];
 
 const Dashboard = () => {
-const navigate = useNavigate();
-const [stats, setStats] = useState({
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
     totalInvoices: 0,
     totalPaid: 0,
     totalUnpaid: 0,
   });
-
   const [recentInvoices, setRecentInvoices] = useState([]);
 
   useEffect(() => {
@@ -78,7 +65,6 @@ const [stats, setStats] = useState({
     try {
       const statsData = await window.electronAPI.getDashboardStats();
       const invoicesData = await window.electronAPI.getRecentInvoices();
-
       setStats(statsData);
       setRecentInvoices(invoicesData);
     } catch (error) {
@@ -86,74 +72,61 @@ const [stats, setStats] = useState({
     }
   };
 
-return ( <div className="space-y-6">
+  return (
+    <div className="space-y-6">
 
+    
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard
+          value={`${Number(stats.totalInvoices)}`}
+          icon={HiOutlineDocumentText}
+          iconBg="bg-blue-100"
+          iconColor="text-blue-600"
+        />
+        <StatCard
+          title="Total Paid"
+          value={`₹${Number(stats.totalPaid).toFixed(2)}`}
+          icon={HiOutlineCurrencyDollar}
+          iconBg="bg-green-100"
+          iconColor="text-green-600"
+        />
+        <StatCard
+          title="Total Unpaid"
+          value={`₹${Number(stats.totalUnpaid).toFixed(2)}`}
+          icon={HiOutlineCurrencyDollar}
+          iconBg="bg-red-100"
+          iconColor="text-red-600"
+        />
+      </div>
 
-  {/* Page Heading */}
-  <div>
-    <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
-    <p className="text-sm text-gray-400">
-      A quick overview of your business finances.
-    </p>
-  </div>
+      {/* Recent Invoices */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
-  {/* Stats */}
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <StatCard
-      value={`${Number(stats.totalInvoices)}`}
-      icon={HiOutlineDocumentText}
-      iconBg="bg-blue-100"
-      iconColor="text-blue-600"
-    />
-    <StatCard
-      title="Total Paid"
-      value={`$${Number(stats.totalPaid).toFixed(2)}`}
-      icon={HiOutlineCurrencyDollar}
-      iconBg="bg-green-100"
-      iconColor="text-green-600"
-    />
-    <StatCard
-      title="Total Unpaid"
-      value={`$${Number(stats.totalUnpaid).toFixed(2)}`}
-      icon={HiOutlineCurrencyDollar}
-      iconBg="bg-red-100"
-      iconColor="text-red-600"
-    />
-  </div>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Recent Invoices
+          </h2>
+          <button
+            onClick={() => navigate("/invoices")}
+            className="text-sm font-medium text-gray-500 hover:text-gray-700 transition"
+          >
+            View All
+          </button>
+        </div>
 
+        {/* Table */}
+        <Table
+          columns={columns}
+          data={recentInvoices}
+          searchPlaceholder="Search invoices..."
+          onRowClick={(row) => navigate(`/invoice/${row.id}`)}
+        />
 
-
-  {/* Recent Invoices */}
-  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
-    {/* Header */}
-    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-      <h2 className="text-lg font-semibold text-gray-800">
-        Recent Invoices
-      </h2>
-
-      <button
-        onClick={() => navigate("/invoices")}
-        className="text-sm font-medium text-gray-500 hover:text-gray-700 transition"
-      >
-        View All
-      </button>
+      </div>
     </div>
-
-    {/* Table */}
-    <Table
-      columns={columns}
-      data={recentInvoices}
-      searchPlaceholder="Search invoices..."
-      onRowClick={(row) => navigate(`/invoice/${row.id}`)}
-    />
-
-  </div>
-
-</div>
-
-
-);
+  );
 };
 
 export default Dashboard;

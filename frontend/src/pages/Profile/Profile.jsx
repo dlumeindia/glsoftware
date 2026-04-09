@@ -204,7 +204,7 @@ const handleHeaderUpload = (e) => {
   ];
 
   const completionFields = [
-    profile.business_name, profile.gstin, profile.pan,
+    profile.business_name, profile.gstin, 
     profile.address_line1, profile.city, profile.state, profile.pincode,
     profile.phone, profile.email,
     profile.bank_name, profile.account_no, profile.ifsc,
@@ -213,6 +213,7 @@ const handleHeaderUpload = (e) => {
   const pct = Math.round((filled / completionFields.length) * 100);
 
   const handleSave = async () => {
+  alert("✅ Profile saved successfully!");
 
     const res = await window.electronAPI.saveProfile({
       userId: user.id,
@@ -328,7 +329,7 @@ const handleHeaderUpload = (e) => {
               <Field label="GSTIN" required>
                 <CharBoxInput length={15} value={profile.gstin} onChange={val => update("gstin", val)} />
               </Field>
-              <Field label="PAN" required>
+              <Field label="PAN" >
                 <CharBoxInput length={10} value={profile.pan} onChange={val => update("pan", val)} />
               </Field>
             </div>
@@ -340,10 +341,10 @@ const handleHeaderUpload = (e) => {
                 <CharBoxInput length={10} value={profile.phone} onChange={val => update("phone", val)} numeric />
               </Field>
               <Field label="Email Address" required>
-                <TextInput type="email" value={profile.email} onChange={e => update("email", e.target.value)} placeholder="billing@company.com" />
+                <TextInput type="email" value={profile.email} onChange={e => update("email", e.target.value)}  />
               </Field>
               <Field label="Website">
-                <TextInput value={profile.website} onChange={e => update("website", e.target.value)} placeholder="https://yourcompany.com" />
+                <TextInput value={profile.website} onChange={e => update("website", e.target.value)}  />
               </Field>
             </div>
           </Section>
@@ -460,13 +461,13 @@ const handleHeaderUpload = (e) => {
         <Section title="Registered Business Address" icon="📍">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <Field label="Address Line 1" required>
-              <TextInput value={profile.address_line1} onChange={e => update("address_line1", e.target.value)} placeholder="Building No., Street, Area" />
+              <TextInput value={profile.address_line1} onChange={e => update("address_line1", e.target.value)}  />
             </Field>
             <Field label="Address Line 2">
-              <TextInput value={profile.address_line2} onChange={e => update("address_line2", e.target.value)} placeholder="Landmark (optional)" />
+              <TextInput value={profile.address_line2} onChange={e => update("address_line2", e.target.value)} />
             </Field>
             <Field label="City" required>
-              <TextInput value={profile.city} onChange={e => update("city", e.target.value)} placeholder="Navi Mumbai" />
+              <TextInput value={profile.city} onChange={e => update("city", e.target.value)} />
             </Field>
             <Field label="State" required>
               <SelectInput value={profile.state} onChange={e => update("state", e.target.value)}
@@ -474,10 +475,10 @@ const handleHeaderUpload = (e) => {
                 options={indianStates.map(s => ({ value: s.name, label: s.name }))} />
             </Field>
             <Field label="State Code" required>
-              <TextInput value={profile.state_code} readOnly={!!profile.state} placeholder="27" onChange={e => update("state_code", e.target.value)} />
+              <TextInput value={profile.state_code} readOnly={!!profile.state} onChange={e => update("state_code", e.target.value)} />
             </Field>
             <Field label="Pincode" required>
-              <TextInput value={profile.pincode} onChange={e => update("pincode", e.target.value)} placeholder="400709" />
+              <TextInput value={profile.pincode} onChange={e => update("pincode", e.target.value)} />
             </Field>
           </div>
         </Section>
@@ -497,16 +498,16 @@ const handleHeaderUpload = (e) => {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <Field label="Bank Name" required>
-              <TextInput value={profile.bank_name} onChange={e => update("bank_name", e.target.value)} placeholder="ICICI Bank" />
+              <TextInput value={profile.bank_name} onChange={e => update("bank_name", e.target.value)}  />
             </Field>
             <Field label="Branch Name" required>
-              <TextInput value={profile.branch} onChange={e => update("branch", e.target.value)} placeholder="Airoli, Navi Mumbai" />
+              <TextInput value={profile.branch} onChange={e => update("branch", e.target.value)}  />
             </Field>
             <Field label="Account Number" required>
-              <TextInput value={profile.account_no} onChange={e => update("account_no", e.target.value)} placeholder="109005002301" />
+              <TextInput value={profile.account_no} onChange={e => update("account_no", e.target.value)}  />
             </Field>
             <Field label="IFSC Code" required>
-              <TextInput value={profile.ifsc} onChange={e => update("ifsc", e.target.value.toUpperCase())} placeholder="ICIC0001090" />
+              <TextInput value={profile.ifsc} onChange={e => update("ifsc", e.target.value.toUpperCase())} />
             </Field>
             <Field label="Account Type">
               <SelectInput value={profile.account_type} onChange={e => update("account_type", e.target.value)}
