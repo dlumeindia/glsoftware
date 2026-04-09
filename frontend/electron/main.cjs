@@ -107,6 +107,7 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
     db.prepare(`
       UPDATE business_profile SET
       business_name=?,
+      customer_name=?,
       business_type=?,
       pan=?,
       gstin=?,
@@ -131,6 +132,7 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
       WHERE user_id=?
     `).run(
       profile.business_name,
+      profile.customer_name,
       profile.business_type,
       profile.pan,
       profile.gstin,
@@ -159,16 +161,17 @@ ipcMain.handle("save-profile", async (event, { userId, profile }) => {
 
     db.prepare(`
       INSERT INTO business_profile (
-        user_id,business_name,business_type,pan,gstin,
+        user_id,business_name, customer_name, business_type,pan,gstin,
         address_line1,address_line2,city,state,state_code,pincode,
         phone,email,website,
         bank_name,branch,account_no,ifsc,account_type,
         invoice_prefix,invoice_series,terms, header_image
       )
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).run(
       userId,
       profile.business_name,
+      profile.customer_name,
       profile.business_type,
       profile.pan,
       profile.gstin,
