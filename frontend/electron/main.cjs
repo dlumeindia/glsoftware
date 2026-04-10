@@ -625,7 +625,7 @@ ipcMain.handle("update-invoice", async (event, data) => {
       cgst,
       sgst,
       igst,
-      items,
+      itemsState,
       roundOff,
       grandTotal,
       ewayEnabled,
@@ -735,7 +735,7 @@ ipcMain.handle("update-invoice", async (event, data) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    items.forEach((item) => {
+    itemsState.forEach((item) => {
       const gross = item.qty * item.rate;
       const disc = (gross * item.discount) / 100;
       const taxable = gross - disc;
@@ -758,7 +758,7 @@ ipcMain.handle("update-invoice", async (event, data) => {
       );
     });
 
-    return { success: true };
+    return { success: true, invoice_no: invoice.invoice_no };
 
   } catch (error) {
     console.error("❌ Update Invoice Error:", error);
