@@ -101,7 +101,7 @@ function EWayBillModal({ invoice, onClose, onGenerate }) {
         </div>
         <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           <Field label="E-Way Bill No." required>
-            <input value={form.ewayBillNo} onChange={(e) => update("ewayBillNo", e.target.value)} placeholder="e.g. 331234567890"
+            <input value={form.ewayBillNo} onChange={(e) => update("ewayBillNo", e.target.value)} 
               style={{ ...inp("ewayBillNo"), fontFamily: "monospace" }}
               onFocus={(e) => e.target.style.borderColor = "#3b82f6"} onBlur={(e) => e.target.style.borderColor = errors.ewayBillNo ? "#ef4444" : "#e5e7eb"} />
 <Err field="ewayBillNo" errors={errors} />     
@@ -124,13 +124,13 @@ function EWayBillModal({ invoice, onClose, onGenerate }) {
             </select>
           </Field>
           <Field label="Vehicle No." required>
-            <input value={form.vehicleNo} onChange={(e) => update("vehicleNo", e.target.value.toUpperCase())} placeholder="MH12AB1234"
+            <input value={form.vehicleNo} onChange={(e) => update("vehicleNo", e.target.value.toUpperCase())} 
               style={{ ...inp("vehicleNo"), fontFamily: "monospace" }}
               onFocus={(e) => e.target.style.borderColor = "#3b82f6"} onBlur={(e) => e.target.style.borderColor = errors.vehicleNo ? "#ef4444" : "#e5e7eb"} />
             <Err field="vehicleNo" errors={errors} />
           </Field>
           <Field label="Transporter Name">
-            <input value={form.transporterName} onChange={(e) => update("transporterName", e.target.value)} placeholder="e.g. Blue Dart Logistics"
+            <input value={form.transporterName} onChange={(e) => update("transporterName", e.target.value)} 
               style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#3b82f6"} onBlur={(e) => e.target.style.borderColor = "#e5e7eb"} />
           </Field>
         </div>
@@ -175,12 +175,15 @@ function EWayBillButton({ invoice, onOpen }) {
 }
 
 // ─── Mark as Paid Button ─────────────────────────────────────────────────────
-function MarkAsPaidButton({ invoice, onMarkPaid }) {
+function MarkAsPaidButton({ invoice, onToggleStatus }) {
   const isPaid = invoice.status === "Paid";
+
   return (
     <button
-      disabled={isPaid}
-      onClick={(e) => { e.stopPropagation(); onMarkPaid(invoice.id); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggleStatus(invoice.id, isPaid);
+      }}
       style={{
         display: "flex",
         alignItems: "center",
@@ -190,16 +193,14 @@ function MarkAsPaidButton({ invoice, onMarkPaid }) {
         fontSize: "12px",
         fontWeight: 700,
         whiteSpace: "nowrap",
-        cursor: isPaid ? "default" : "pointer",
+        cursor: "pointer",
         border: isPaid ? "1.5px solid #86efac" : "1.5px solid #fed7aa",
         background: isPaid ? "#f0fdf4" : "#fff7ed",
         color: isPaid ? "#16a34a" : "#ea580c",
-        opacity: isPaid ? 0.8 : 1,
-        transition: "all 0.2s ease",
       }}
     >
       <FiCheckCircle size={13} />
-      {isPaid ? "Paid" : "Mark as Paid"}
+      {isPaid ? "Paid" : "Unpaid"}
     </button>
   );
 }
@@ -232,21 +233,27 @@ const [toDate, setToDate] = useState("");
   }
 };
 
-const handleMarkPaid = async (invoiceId) => {
+const handleToggleStatus = async (invoiceId, isPaid) => {
   const invoice = invoices.find((inv) => inv.id === invoiceId);
 
-  const confirmPaid = window.confirm(
-    `Mark Invoice #${invoice?.number} as Paid?`
-  );
+  const confirmMsg = isPaid
+    ? `Mark Invoice #${invoice?.number} as Unpaid?`
+    : `Mark Invoice #${invoice?.number} as Paid?`;
 
-  if (!confirmPaid) return; // ❌ stop if cancel
+  const confirmAction = window.confirm(confirmMsg);
+  if (!confirmAction) return;
 
-  const res = await window.electronAPI.markInvoicePaid(invoiceId);
+  const res = await window.electronAPI.updateInvoiceStatus({
+    id: invoiceId,
+    status: isPaid ? "Unpaid" : "Paid",
+  });
 
   if (res.success) {
     setInvoices((prev) =>
       prev.map((inv) =>
-        inv.id === invoiceId ? { ...inv, status: "Paid" } : inv
+        inv.id === invoiceId
+          ? { ...inv, status: isPaid ? "Unpaid" : "Paid" }
+          : inv
       )
     );
   }
@@ -309,10 +316,10 @@ const columns = [
     key: "status",
     label: "Status",
     render: (_, row) => (
-      <MarkAsPaidButton
-        invoice={row}
-        onMarkPaid={handleMarkPaid}
-      />
+   <MarkAsPaidButton
+  invoice={row}
+  onToggleStatus={handleToggleStatus}
+/>
     ),
   },
 

@@ -204,8 +204,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     company_name: invoice?.bill_company_name,
     gstin: invoice?.bill_gstin,
     pan: invoice?.bill_pan,
-    address_line1: invoice?.bill_address1,
-    address_line2: invoice?.bill_address2,
+    address_line1: invoice?.bill_address_line1,
+    address_line2: invoice?.bill_address_line2,
     city: invoice?.bill_city,
     state: invoice?.bill_state,
     state_code: invoice?.bill_state_code,
@@ -218,8 +218,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     company_name: invoice?.ship_company_name,
     gstin: invoice?.ship_gstin,
     pan: invoice?.ship_pan,
-    address_line1: invoice?.ship_address1,
-    address_line2: invoice?.ship_address2,
+    address_line1: invoice?.ship_address_line1,
+    address_line2: invoice?.ship_address_line2,
     city: invoice?.ship_city,
     state: invoice?.ship_state,
     state_code: invoice?.ship_state_code,
@@ -343,8 +343,11 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
   );
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount + Number(pfCharge);
-  const isInter = supplyType === "interstate";
-  const totalItemTax = itemsState.reduce((s, item) => s + itemTax(item), 0);
+const isInter =
+  billForm?.state_code &&
+  profile?.state_code &&
+  billForm.state_code !== profile.state_code;
+    const totalItemTax = itemsState.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
   const igst = isInter ? totalItemTax : 0;
@@ -417,36 +420,33 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
 
       if (res?.success) {
         alert(`✅ Invoice Saved (Invoice No: ${res.invoice_no})`);
-
-        navigate(0);
         
-        // onSave({
-        
-        //   ...invoice,
-        //   invoiceNo,
-        //   invoiceDate,
-        //   invoiceType,
-        //   supplyType,
-        //   subSupplyType,
-        //   revCharge,
-        //   customer: billForm,
-        //   shipping: sameAsBilling ? billForm : shipForm,
-        //   itemsState,
-        //   pfCharge,
-        //   termsAndConditions,
-        //   ewayBill: ewayEnabled
-        //     ? {
-        //         ...invoice?.ewayBill,
-        //         docType,
-        //         approximateDistance,
-        //         transporterName,
-        //         transporterDocNo,
-        //         vehicleNo,
-        //         from,
-        //         deliveryMode,
-        //       }
-        //     : null,
-        // });
+        onSave({
+          ...invoice,
+          invoiceNo,
+          invoiceDate,
+          invoiceType,
+          supplyType,
+          subSupplyType,
+          revCharge,
+          customer: billForm,
+          shipping: sameAsBilling ? billForm : shipForm,
+          itemsState,
+          pfCharge,
+          termsAndConditions,
+          ewayBill: ewayEnabled
+            ? {
+                ...invoice?.ewayBill,
+                docType,
+                approximateDistance,
+                transporterName,
+                transporterDocNo,
+                vehicleNo,
+                from,
+                deliveryMode,
+              }
+            : null,
+        });
 
         // Optional: Reset form
         // resetForm();
@@ -1729,7 +1729,6 @@ export default function InvoiceDetail() {
     const [profile, setProfile] = useState();
     const [customer, setCustomer] = useState();
     const [items, setItems] = useState([]); 
-    const [isUpdated, setIsUpdated] = useState(false);
 
 
   // ── Added: mode & invoice state for edit toggle ──
@@ -1738,7 +1737,6 @@ export default function InvoiceDetail() {
   const [toast, setToast] = useState(false);
 
     useEffect(() => {
-       if (!id || isUpdated) return; 
     if (id) {
       const numericId = Number(id);
       window.electronAPI.getInvoiceById(numericId).then((res) => {
@@ -1767,7 +1765,6 @@ export default function InvoiceDetail() {
     setCustomer(updated.customer); // customer
     setItems(updated.items); 
     setMode("view");  
-    setIsUpdated(true);
     setToast("Invoice updated successfully!");
     setTimeout(() => setToast(false), 3000);
   };
@@ -1791,13 +1788,13 @@ export default function InvoiceDetail() {
           termsAndConditions: "",
         };
 
-        const res = await window.electronAPI.deliveryChallan(payload);
+        const res = await window.electronAPI.deliveryChallan(payload );
 
         if (res.success) {
           alert("✅ Delivery Challan Created");
 
           // redirect to view page
-          navigate(`/delivery-challan/${id}`);
+          navigate(`/delivery-challan/${res.id}`);
         } else {
           alert("❌ Failed to create challan");
         }
@@ -1910,7 +1907,7 @@ const totalDiscount = items.reduce((sum, item) => {
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount + Number(0);
 
-  const isInter = invoice?.ship_state_code == profile?.state_code;
+const isInter = invoice?.ship_state_code !== profile?.state_code;
   console.log(isInter);
   console.log(invoice?.ship_state_code);
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
@@ -1965,7 +1962,11 @@ const totalDiscount = items.reduce((sum, item) => {
             </button>
             <div>
               <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Invoice {invoice?.invoiceNo}</h1>
-              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(invoice?.invoiceDate)} · {customer?.company_name}</p>
+<p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>
+  {invoice?.invoiceDate ? formatDate(invoice.invoiceDate) : ""}
+  {invoice?.invoiceDate && customer?.company_name ? " · " : ""}
+  {customer?.company_name || ""}
+</p>
             </div>
             <StatusBadge status={invoice?.status} />
           </div>
@@ -2095,10 +2096,10 @@ const totalDiscount = items.reduce((sum, item) => {
               <MetaRow label="Supply Type" value={invoice?.supply_type ? invoice?.supply_type.charAt(0).toUpperCase() + invoice?.supply_type.slice(1) : "—"} />
               <MetaRow label="Sub-Supply Type" value={invoice?.sub_supply_type} />
               <MetaRow label="Rev. Charge" value={invoice?.reverse_charge} />
-              <MetaRow label="Place of Supply" value={invoice?.ship_state  ? `${invoice.ship_state}${invoice?.ship_state_code ? ` (${invoice.ship_state_code})` : ""}`    : ""} />
+              <MetaRow label="Place of Supply" value={`${invoice?.ship_state} (${invoice?.ship_state_code})`} />
 
               {/* ── E-Way Bill No. ── */}
-          {invoice?.eway_enabled  === 1 && (
+          {invoice?.eway_enabled && (
   <>
     <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
 
@@ -2233,12 +2234,12 @@ const totalDiscount = items.reduce((sum, item) => {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
               <thead>
                 <tr style={{ background: "#f3f4f6" }}>
-                  {["Sr. No.", "HSN/SAC", "Taxable Value",
-                    ...(isInter
-                      ? ["IGST Rate", "IGST Amount"]
-                      : ["Central Tax Rate", "Central Tax Amount", "State Tax Rate", "State Tax Amount"]),
-                    "Cess Rate", "Cess Amount"
-                  ].map((h, i) => (
+                  {[
+  "Sr. No.", "HSN/SAC", "Taxable Value",
+  ...(isInter
+    ? ["IGST Rate", "IGST Amount"]
+    : ["Central Tax Rate", "Central Tax Amount", "State Tax Rate", "State Tax Amount"])
+].map((h, i) => (
                     <th key={h} style={{ padding: "8px 10px", textAlign: i >= 2 ? "right" : "left", fontSize: "10.5px", fontWeight: 700, color: "#374151", letterSpacing: "0.04em", border: "1px solid #d1d5db" }}>{h}</th>
                   ))}
                 </tr>
@@ -2262,8 +2263,7 @@ const totalDiscount = items.reduce((sum, item) => {
                         <td style={{ ...cell(), textAlign: "right" }}> {fmt(row.tax / 2)}</td>
                       </>
                     )}
-                    <td style={{ ...cell(), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
-                    <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
+                  
                   </tr>
                 ))}
                 <tr style={{ background: "#f3f4f6", borderTop: "1.5px solid #d1d5db" }}>
@@ -2282,8 +2282,7 @@ const totalDiscount = items.reduce((sum, item) => {
                       <td style={{ ...cell(), textAlign: "right", fontWeight: 700 }}> {fmt(invoice?.sgst)}</td>
                     </>
                   )}
-                  <td style={{ ...cell(), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
-                  <td style={{ ...cell({ borderRight: "none" }), textAlign: "right", color: "#9ca3af" }}>N.A.</td>
+               
                 </tr>
               </tbody>
             </table>

@@ -106,6 +106,19 @@ const inputStyle = {
   boxSizing: "border-box",
 };
 
+const tableInputStyle = {
+  width: "100%",
+  padding: "4px 6px",
+  border: "1.5px solid #e5e7eb",
+  borderRadius: "6px",
+  fontSize: "12px",
+  color: "#111827",
+  background: "#ffffff",
+  outline: "none",
+  boxSizing: "border-box",
+  appearance: "none",
+};
+
 const TextInput = ({ value, onChange, type = "text", readOnly }) => (
   <input
     type={type}
@@ -263,7 +276,7 @@ const [customerModal, setCustomerModal] = useState(false);
   const [custSearch, setCustSearch] =useState("");
   const [billForm, setBillForm] =useState({ ...emptyAddress });
   const [shipForm, setShipForm] =useState({ ...emptyAddress });
-  const [sameAsBilling, setSameAsBilling] =useState(false);
+  const [sameAsBilling, setSameAsBilling] =useState(true);
 
    
   
@@ -281,6 +294,13 @@ const [customerModal, setCustomerModal] = useState(false);
     useEffect(() => {
       loadCustomers();
     }, []);
+
+
+    useEffect(() => {
+  if (sameAsBilling) {
+    setShipForm({ ...billForm });
+  }
+}, [sameAsBilling, billForm]);
 
      useEffect(() => {
       const loadProfile = async () => {
@@ -444,10 +464,17 @@ const [customerModal, setCustomerModal] = useState(false);
     }
   };
 
-  const handleSameAsBilling = (checked) => {
-    setSameAsBilling(checked);
-    if (checked) setShipForm({ ...billForm });
-  };
+const handleSameAsBilling = (checked) => {
+  setSameAsBilling(checked);
+
+  if (checked) {
+    // copy billing → shipping
+    setShipForm({ ...billForm });
+  } else {
+    // clear shipping
+    setShipForm({ ...emptyAddress });
+  }
+};
 
   const [items, setItems] =useState([
     { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 },
@@ -492,9 +519,13 @@ const totalDiscount = items.reduce((s, item) => {
 }, 0);
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount;
-  const BUSINESS_customer_state_CODE = businessInfo.customer_state_code;
-  const placeOfSupplyCode = sameAsBilling ? billForm.customer_state_code : shipForm.customer_state_code;
- const isInter = placeOfSupplyCode !== BUSINESS_customer_state_CODE;
+const BUSINESS_customer_state_CODE = profile?.state_code;
+const placeOfSupplyCode =
+  shipForm?.place_of_supply_code ||
+  shipForm?.customer_state_code ||
+  billForm?.place_of_supply_code ||
+  billForm?.customer_state_code;
+     const isInter = placeOfSupplyCode !== BUSINESS_customer_state_CODE;
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
@@ -645,11 +676,46 @@ const totalDiscount = items.reduce((s, item) => {
                 Same as Billing
               </label>
             </div>
-            {sameAsBilling ? (
-              <div style={{ padding: "20px", background: "#f8fafc", borderRadius: "10px", border: "1.5px dashed #d1d5db", textAlign: "center", color: "#6b7280", fontSize: "13px" }}>
-                ✓ Shipping address is same as billing address
-              </div>
-            ) : (
+           {sameAsBilling ? (
+  <div
+    style={{
+      padding: "16px 18px",
+      background: "#f0f9ff",
+      borderRadius: "10px",
+      border: "1.5px solid #bae6fd",
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
+      fontSize: "13px",
+      color: "#0369a1",
+      fontWeight: 600,
+    }}
+  >
+    <div
+      style={{
+        width: "28px",
+        height: "28px",
+        borderRadius: "50%",
+        background: "#0ea5e9",
+        color: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "16px",
+        fontWeight: 700,
+      }}
+    >
+      ✓
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <span>Shipping address same as billing</span>
+      <span style={{ fontSize: "11px", color: "#0284c7", fontWeight: 500 }}>
+        Uncheck to add separate shipping address
+      </span>
+    </div>
+  </div>
+) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
               
                 <Field label="Address Line 1">
@@ -661,13 +727,13 @@ const totalDiscount = items.reduce((s, item) => {
                 <Field label="City">
                   <TextInput value={shipForm.customer_city} onChange={(e) => updateShipForm("customer_city", e.target.value)} placeholder="Mumbai" />
                 </Field>
-                <Field label="customer_state">
+                <Field label="state">
                   <SelectInput value={shipForm.customer_state} onChange={(e) => updateShipForm("customer_state", e.target.value)} placeholder="Select customer_state" options={indiancustomer_states.map((s) => ({ value: s.name, label: s.name }))} />
                 </Field>
-                <Field label="customer_state Code">
+                <Field label="state Code">
                   <TextInput value={shipForm.customer_state_code} onChange={(e) => updateShipForm("customer_state_code", e.target.value)} placeholder="27" readOnly={!!shipForm.customer_state} />
                 </Field>
-                <Field label="customer_pincode">
+                <Field label="pincode">
                   <TextInput value={shipForm.customer_pincode} onChange={(e) => updateShipForm("customer_pincode", e.target.value)} placeholder="400001" />
                 </Field>
                 <div />
@@ -737,57 +803,66 @@ const totalDiscount = items.reduce((s, item) => {
       {/* Items Table */}
       <Section title="Items / Services" icon="📦">
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-            <thead>
+<table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
+
+  <colgroup>
+  <col style={{ width: "30px" }} />
+  <col />
+  <col style={{ width: "80px" }} />
+  <col style={{ width: "75px" }} />
+  <col style={{ width: "70px" }} />
+  <col style={{ width: "95px" }} />
+  <col style={{ width: "60px" }} />
+  <col style={{ width: "100px" }} />
+  <col style={{ width: "65px" }} />
+  <col style={{ width: "90px" }} />
+  <col style={{ width: "95px" }} />
+  <col style={{ width: "36px" }} />
+</colgroup>
+              <thead>
               <tr style={{ background: "#f8fafc" }}>
                 {["#", "Description", "HSN/SAC", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
-                  <th key={h} style={{ padding: "10px 10px", textAlign: ["Taxable (₹)", "Tax (₹)", "Total (₹)", "Rate (₹)"].includes(h) ? "right" : "left", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb", whiteSpace: "nowrap" }}>{h}</th>
+                  <th key={h} style={{ padding: "8px 8px", textAlign: ["Taxable (₹)", "Tax (₹)", "Total (₹)", "Rate (₹)"].includes(h) ? "right" : "left", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {items.map((item, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "8px 10px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
-                  <td style={{ padding: "5px 6px", minWidth: "100px" }}>
-                    <input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
-                  </td>                
+<td style={{ padding: "6px 8px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
+<td style={{ padding: "3px 4px", overflow: "hidden" }}>
+  <input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...tableInputStyle }} />                  </td>                
                   <td style={{ padding: "5px 6px", width: "80px" }}>
-                    <input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} style={{ ...inputStyle, padding: "6px 9px", fontSize: "12.5px" }} />
+<input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} style={{ ...tableInputStyle }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "75px" }}>
-                    <select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...inputStyle, padding: "6px 7px", fontSize: "12px" }}>
-                      {units.map((u) => <option key={u}>{u}</option>)}
+<select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...tableInputStyle }}>
+                        {units.map((u) => <option key={u}>{u}</option>)}
                     </select>
                   </td>
                   <td style={{ padding: "5px 6px", width: "80px" }}>
                   <input type="number" value={item.qty || ""}onChange={(e) =>
   updateItem(i, "qty", e.target.value === "" ? "" : Number(e.target.value))
-}style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />
+} style={{ ...tableInputStyle, textAlign: "center" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "100px" }}>
                     <input type="number" value={item.rate}onChange={(e) =>
   updateItem(i, "rate", e.target.value === "" ? "" : Number(e.target.value))
-} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "right" }} />
-                  </td>
+} style={{ ...tableInputStyle, textAlign: "right" }} />                  </td>
                   <td style={{ padding: "5px 6px", width: "65px" }}>
                     <input type="number" value={item.discount} min={0} max={100} onChange={(e) =>
   updateItem(i, "discount", e.target.value === "" ? "" : Number(e.target.value))
-} style={{ ...inputStyle, padding: "6px 8px", fontSize: "12.5px", textAlign: "center" }} />
+} style={{ ...tableInputStyle, textAlign: "center" }} />
                   </td>
-                  <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>
-                    ₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+<td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: "5px 6px", width: "70px" }}>
-                    <select value={item.gstRate} onChange={(e) => updateItem(i, "gstRate", Number(e.target.value))} style={{ ...inputStyle, padding: "6px 7px", fontSize: "12px" }}>
-                      {gstOptions.map((r) => <option key={r} value={r}>{r}%</option>)}
+<select value={item.gstRate} onChange={(e) => updateItem(i, "gstRate", Number(e.target.value))} style={{ ...tableInputStyle }}>                      {gstOptions.map((r) => <option key={r} value={r}>{r}%</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: "6px 10px", textAlign: "right", color: "#374151", whiteSpace: "nowrap", fontSize: "12.5px" }}>
-                    ₹ {itemTax(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+<td style={{ padding: "4px 8px", textAlign: "right", color: "#374151", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTax(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
-                  <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "#1e3a5f", whiteSpace: "nowrap", fontSize: "12.5px" }}>
-                    ₹ {itemTotal(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+<td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 700, color: "#1e3a5f", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTotal(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: "5px 6px", textAlign: "center" }}>
                     <button onClick={() => removeItem(i)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "16px", padding: "4px 6px", borderRadius: "6px" }} title="Remove">×</button>
