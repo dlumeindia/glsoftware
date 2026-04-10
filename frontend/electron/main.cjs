@@ -1100,6 +1100,21 @@ ipcMain.handle("dashboard:get-recent-invoices", async () => {
 
 ipcMain.handle("delivery-challan:create", async (event, data) => {
   try {
+
+    let finalChallanNo = 'CHL-0001';
+
+      const last = db
+      .prepare("SELECT challan_no FROM delivery_challan ORDER BY id DESC LIMIT 1")
+      .get();
+
+    if (last && last.invoice_no) {
+      const lastNumber = parseInt(last.challan_no.split("-")[1]) || 0;
+      const nextNumber = lastNumber + 1;
+
+      finalChallanNo = `CHL-${String(nextNumber).padStart(4, "0")}`;
+    } else {
+      finalChallanNo = "CHL-0001";
+    }
     const stmt = db.prepare(`
       INSERT INTO delivery_challan (
         invoice_id,
@@ -1117,7 +1132,7 @@ ipcMain.handle("delivery-challan:create", async (event, data) => {
 
     const result = stmt.run(
       data.invoice_id,
-      data.challanNo,
+      data.finalChallanNo,
       data.challanDate,
       data.againstInvoiceNo,
       data.transportMode,
