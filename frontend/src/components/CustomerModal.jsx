@@ -73,7 +73,6 @@ export default function CustomerModal({ onClose, onCustomerCreated }) {
         >
          <Customers
   onSuccess={(customer) => {
-    alert("✅ Customer saved successfully");
 
     onCustomerCreated && onCustomerCreated(customer);
   }}

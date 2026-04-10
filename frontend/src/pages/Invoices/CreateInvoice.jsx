@@ -188,7 +188,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
       <Field label={customerType === "B2B" ? "Company / Name" : "Company Name"} required={fieldRules.company_name}>
-        <TextInput value={form.customer_name} onChange={(e) => update("customer_name", e.target.value)}/>
+        <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)}/>
       </Field>
       <Field label="Email" required={fieldRules.customer_email} hint={!fieldRules.customer_email ? "optional" : undefined}>
         <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="billing@company.com" />

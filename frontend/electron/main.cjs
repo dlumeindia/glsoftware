@@ -510,7 +510,7 @@ ipcMain.handle("save-invoice", async (event, data) => {
         safe(revCharge),
         safe(customerType),
 
-        safe(billForm.customer_name),
+        safe(billForm.company_name),
         safe(billForm.customer_gstin),
         safe(billForm.customer_pan),
         safe(billForm.customer_email),
@@ -771,17 +771,18 @@ ipcMain.handle("get-invoices", async () => {
     try {
       const stmt = db.prepare(`
         SELECT 
-          id,
-          invoice_no,
-          invoice_date,
-          bill_company_name,
-          customer_type,
-          grand_total,
-          status,
-          eway_enabled,
-          created_at
-        FROM invoices
-        ORDER BY id DESC
+          i.id,
+          i.invoice_no,
+          i.invoice_date,
+          i.bill_company_name,
+          i.customer_type,
+          c.customer_name as customer_name,
+          i.grand_total,
+          i.eway_enabled,
+          i.status
+        FROM invoices i
+        LEFT JOIN customers c ON i.customer_id = c.id
+        ORDER BY i.id DESC
       `);
 
       const rows = stmt.all();
