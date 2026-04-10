@@ -147,6 +147,11 @@ const handleHeaderUpload = (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
+   if (file.size > 102400) {
+    alert("Image must be less than 100KB");
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = () => {
     setHeaderImage(reader.result);
