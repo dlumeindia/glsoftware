@@ -31,7 +31,7 @@ function createWindow() {
     win.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
   }
 
-  win.webContents.openDevTools(); 
+  // win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -639,6 +639,9 @@ ipcMain.handle("update-invoice", async (event, data) => {
       customerID,
     } = data;
 
+    console.log(billForm);
+    console.log(shipForm);
+
     const safe = (val) => val ?? "";
 
     // ==========================
@@ -675,24 +678,24 @@ ipcMain.handle("update-invoice", async (event, data) => {
       safe(revCharge),
 
       safe(billForm.company_name),
-      safe(billForm.customer_gstin),
-      safe(billForm.customer_pan),
-      safe(billForm.customer_email),
-      safe(billForm.customer_phone),
-      safe(billForm.customer_address_line1),
-      safe(billForm.customer_address_line2),
-      safe(billForm.customer_city),
-      safe(billForm.customer_state),
-      safe(billForm.customer_state_code),
-      safe(billForm.customer_pincode),
+      safe(billForm.gstin),
+      safe(billForm.pan),
+      safe(billForm.email),
+      safe(billForm.phone),
+      safe(billForm.address_line1),
+      safe(billForm.address_line2),
+      safe(billForm.city),
+      safe(billForm.state),
+      safe(billForm.state_code),
+      safe(billForm.pincode),
 
-      safe(shipForm.company_name),
-      safe(shipForm.customer_address_line1),
-      safe(shipForm.customer_address_line2),
-      safe(shipForm.customer_city),
-      safe(shipForm.customer_state),
-      safe(shipForm.customer_state_code),
-      safe(shipForm.customer_pincode),
+      safe(shipForm.name),
+      safe(shipForm.address_line1),
+      safe(shipForm.address_line2),
+      safe(shipForm.city),
+      safe(shipForm.state),
+      safe(shipForm.state_code),
+      safe(shipForm.pincode),
       sameAsBilling ? 1 : 0,
 
       safe(subtotal),
@@ -804,6 +807,7 @@ ipcMain.handle("get-invoice-by-id", async (event, id) => {
     .prepare("SELECT * FROM invoices WHERE id = ?")
     .get(id);
 
+
     const customer = db
     .prepare("SELECT * FROM customers WHERE id = ?")
     .get(invoice.customer_id);
@@ -851,12 +855,11 @@ ipcMain.handle("mark-invoice-paid", async (event, id) => {
 
 ipcMain.handle("save-eway", async (event, { id, data }) => {
   try {
-    console.log(id);
     console.log(data);
     db.prepare(`
       UPDATE invoices
       SET eway_bill_no = ?, vehicle_no = ?, transporter_name = ?, 
-      eway_enabled = ?, transport_mode = ?
+      eway_enabled = ?, transport_mode = ?, eway_bill_date = ?, eway_valid_upto = ?
       WHERE id = ?
     `).run(
       data.ewayBillNo,
@@ -864,6 +867,8 @@ ipcMain.handle("save-eway", async (event, { id, data }) => {
       data.transporterName,
       1,
       data.transportMode,
+      data.ewayBillDate,
+      data.ewayValidUpto,
       id
     );
 
@@ -1126,8 +1131,10 @@ ipcMain.handle("delivery-challan:create", async (event, data) => {
       UPDATE invoices SET challan = 1 WHERE id = ?
     `).run(data.invoice_id);    
 
+    
 
-    return { success: true, id: result.lastInsertRowid };
+
+    return { success: true, id: data.invoice_id };
   } catch (err) {
     console.error(err);
     return { success: false };

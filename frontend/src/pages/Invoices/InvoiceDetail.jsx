@@ -204,8 +204,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     company_name: invoice?.bill_company_name,
     gstin: invoice?.bill_gstin,
     pan: invoice?.bill_pan,
-    address_line1: invoice?.bill_address_line1,
-    address_line2: invoice?.bill_address_line2,
+    address_line1: invoice?.bill_address1,
+    address_line2: invoice?.bill_address2,
     city: invoice?.bill_city,
     state: invoice?.bill_state,
     state_code: invoice?.bill_state_code,
@@ -218,8 +218,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     company_name: invoice?.ship_company_name,
     gstin: invoice?.ship_gstin,
     pan: invoice?.ship_pan,
-    address_line1: invoice?.ship_address_line1,
-    address_line2: invoice?.ship_address_line2,
+    address_line1: invoice?.ship_address1,
+    address_line2: invoice?.ship_address2,
     city: invoice?.ship_city,
     state: invoice?.ship_state,
     state_code: invoice?.ship_state_code,
@@ -417,33 +417,36 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
 
       if (res?.success) {
         alert(`✅ Invoice Saved (Invoice No: ${res.invoice_no})`);
+
+        navigate(0);
         
-        onSave({
-          ...invoice,
-          invoiceNo,
-          invoiceDate,
-          invoiceType,
-          supplyType,
-          subSupplyType,
-          revCharge,
-          customer: billForm,
-          shipping: sameAsBilling ? billForm : shipForm,
-          itemsState,
-          pfCharge,
-          termsAndConditions,
-          ewayBill: ewayEnabled
-            ? {
-                ...invoice?.ewayBill,
-                docType,
-                approximateDistance,
-                transporterName,
-                transporterDocNo,
-                vehicleNo,
-                from,
-                deliveryMode,
-              }
-            : null,
-        });
+        // onSave({
+        
+        //   ...invoice,
+        //   invoiceNo,
+        //   invoiceDate,
+        //   invoiceType,
+        //   supplyType,
+        //   subSupplyType,
+        //   revCharge,
+        //   customer: billForm,
+        //   shipping: sameAsBilling ? billForm : shipForm,
+        //   itemsState,
+        //   pfCharge,
+        //   termsAndConditions,
+        //   ewayBill: ewayEnabled
+        //     ? {
+        //         ...invoice?.ewayBill,
+        //         docType,
+        //         approximateDistance,
+        //         transporterName,
+        //         transporterDocNo,
+        //         vehicleNo,
+        //         from,
+        //         deliveryMode,
+        //       }
+        //     : null,
+        // });
 
         // Optional: Reset form
         // resetForm();
@@ -1726,6 +1729,7 @@ export default function InvoiceDetail() {
     const [profile, setProfile] = useState();
     const [customer, setCustomer] = useState();
     const [items, setItems] = useState([]); 
+    const [isUpdated, setIsUpdated] = useState(false);
 
 
   // ── Added: mode & invoice state for edit toggle ──
@@ -1734,6 +1738,7 @@ export default function InvoiceDetail() {
   const [toast, setToast] = useState(false);
 
     useEffect(() => {
+       if (!id || isUpdated) return; 
     if (id) {
       const numericId = Number(id);
       window.electronAPI.getInvoiceById(numericId).then((res) => {
@@ -1762,6 +1767,7 @@ export default function InvoiceDetail() {
     setCustomer(updated.customer); // customer
     setItems(updated.items); 
     setMode("view");  
+    setIsUpdated(true);
     setToast("Invoice updated successfully!");
     setTimeout(() => setToast(false), 3000);
   };
@@ -1785,13 +1791,13 @@ export default function InvoiceDetail() {
           termsAndConditions: "",
         };
 
-        const res = await window.electronAPI.deliveryChallan(payload );
+        const res = await window.electronAPI.deliveryChallan(payload);
 
         if (res.success) {
           alert("✅ Delivery Challan Created");
 
           // redirect to view page
-          navigate(`/delivery-challan/${res.id}`);
+          navigate(`/delivery-challan/${id}`);
         } else {
           alert("❌ Failed to create challan");
         }
@@ -2089,10 +2095,10 @@ const totalDiscount = items.reduce((sum, item) => {
               <MetaRow label="Supply Type" value={invoice?.supply_type ? invoice?.supply_type.charAt(0).toUpperCase() + invoice?.supply_type.slice(1) : "—"} />
               <MetaRow label="Sub-Supply Type" value={invoice?.sub_supply_type} />
               <MetaRow label="Rev. Charge" value={invoice?.reverse_charge} />
-              <MetaRow label="Place of Supply" value={`${invoice?.ship_state} (${invoice?.ship_state_code})`} />
+              <MetaRow label="Place of Supply" value={invoice?.ship_state  ? `${invoice.ship_state}${invoice?.ship_state_code ? ` (${invoice.ship_state_code})` : ""}`    : ""} />
 
               {/* ── E-Way Bill No. ── */}
-          {invoice?.eway_enabled && (
+          {invoice?.eway_enabled  === 1 && (
   <>
     <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
 

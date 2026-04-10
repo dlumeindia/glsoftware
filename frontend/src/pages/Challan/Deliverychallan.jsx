@@ -6,15 +6,6 @@ import { useAuth } from "../../context/AuthContext";
 
 
 
-const businessInfo = {
-  name: "GLS TECHNOLOGIST",
-  address: "Plot No. PAP-A-78, TTC Industrial Area, Pawane MIDC, Turbhe, Navi Mumbai, Maharashtra - 400709",
-  state_code: "27",
-  email: "glstechnologist2020@gmail.com",
-  gst: "27AAUFG7297B1ZV",
-  phone: "+91 98765 43210",
-};
-
 const formatDate = (d) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -37,23 +28,40 @@ export default function DeliveryChallan() {
   const [customer, setCustomer] = useState({});
   const [items, setItems] = useState([]);
   const [challan, setChallan] = useState({});
+  const [loading, setLoading] = useState(true);
 
 
   const totalQty = items.reduce((s, i) => s + i.qty, 0);
 
-   useEffect(() => {
-      if (id) {
-        const numericId = Number(id);
-        window.electronAPI.getInvoiceById(numericId).then((res) => {
-          if (res.success) {
-          setInvoice(res.data);       
-          setCustomer(res.data.customer); 
-          setItems(res.data.items);   
-          setChallan(res.data.delivery);   
-        }
-        });
+  useEffect(() => {
+  let interval;
+
+  const fetchData = async () => {
+    if (!id) return;
+
+    const numericId = Number(id);
+    const res = await window.electronAPI.getInvoiceById(numericId);
+
+    if (res.success) {
+      setInvoice(res.data);
+      setCustomer(res.data.customer);
+      setItems(res.data.items);
+
+      
+      if (res.data.delivery) {
+        setChallan(res.data.delivery);
+        setLoading(false);
+        clearInterval(interval); 
       }
-    }, [id]);
+    }
+  };
+
+  fetchData(); 
+  
+  interval = setInterval(fetchData, 1000);
+
+  return () => clearInterval(interval);
+}, [id]);
 
     useEffect(() => {
       const loadProfile = async () => {
@@ -250,20 +258,20 @@ export default function DeliveryChallan() {
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Billing Address
               </div>
-              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{customer.company_name}</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.bill_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {customer.address_line1}
-                {customer.address_line2 && <>, {customer.address_line2}</>}
-                <br />{customer.city}, {customer.state}, India
-                <br />Pincode: {customer.pincode}
+                {invoice.bill_address1}
+                {invoice.bill_address2 && <>, {invoice.bill_address2}</>}
+                <br />{invoice.bill_city}, {invoice.bill_state}, India
+                <br />Pincode: {invoice.bill_pincode}
                 <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "2px" }}>
-                  State Code: <strong>{customer.state_code}</strong>
+                  State Code: <strong>{invoice.bill_state_code}</strong>
                 </div>
               </div>
-              {customer.gstin && <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "4px", marginBottom: "2px" }}>GSTIN: <strong>{customer.gstin}</strong></div>}
-              {customer.pan && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "4px" }}>PAN: <strong>{customer.pan}</strong></div>}
-              {customer.phone && <div style={{ fontSize: "12px", color: "#4b5563", marginTop: "4px" }}>Mo: +91-{customer.phone}</div>}
-              {customer.email && <div style={{ fontSize: "12px", color: "#4b5563" }}>{customer.email}</div>}
+              {invoice.bill_gstin && <div style={{ fontSize: "11.5px", color: "#374151", marginTop: "4px", marginBottom: "2px" }}>GSTIN: <strong>{invoice.bill_gstin}</strong></div>}
+              {invoice.bill_pan && <div style={{ fontSize: "11.5px", color: "#374151", marginBottom: "4px" }}>PAN: <strong>{invoice.bill_pan}</strong></div>}
+              {invoice.bill_phone && <div style={{ fontSize: "12px", color: "#4b5563", marginTop: "4px" }}>Mo: +91-{invoice.bill_phone}</div>}
+              {invoice.bill_email && <div style={{ fontSize: "12px", color: "#4b5563" }}>{invoice.bill_email}</div>}
             </div>
 
             {/* Shipping Address */}
@@ -273,8 +281,8 @@ export default function DeliveryChallan() {
               </div>
               <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0b1324", marginBottom: "4px" }}>{invoice.ship_company_name}</div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.6" }}>
-                {invoice.ship_address_line1}
-                {invoice.ship_address_line2 && <>, {invoice.ship_address_line2}</>}
+                {invoice.ship_address1}
+                {invoice.ship_address2 && <>, {invoice.ship_address2}</>}
                 <br />{invoice.ship_city}, {invoice.ship_state}, India
                 <br />Pincode: {invoice.ship_pincode}
               </div>
@@ -293,7 +301,7 @@ export default function DeliveryChallan() {
               <MetaRow label="Challan No." value={challan.challan_no} />
               <MetaRow label="Challan Date" value={formatDate(challan.challan_date)} />
               <MetaRow label="Against Invoice" value={challan.against_invoice_no} />
-              <MetaRow label="Invoice Date" value={formatDate(challan.invoice_date)} />
+              <MetaRow label="Invoice Date" value={formatDate(invoice.invoice_date)} />
               <MetaRow label="Place of Supply" value={`${challan.place_of_supply} (${challan.place_of_supply_code})`} />
               <MetaRow label="Transport Mode" value={challan.transport_mode} />
               <MetaRow label="Vehicle No." value={challan.vehicle_no} />
