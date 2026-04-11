@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 const indianStates = [
   { code: "01", name: "Jammu & Kashmir" }, { code: "02", name: "Himachal Pradesh" },
   { code: "03", name: "Punjab" }, { code: "04", name: "Chandigarh" },
@@ -212,8 +213,7 @@ const handleSave = async () => {
   if (Object.keys(e).length) {
     setErrors(e);
 
-    const messages = Object.values(e).join("\n");
-    alert("❌ Please fix the following:\n\n" + messages);
+    Object.values(e).forEach(msg => toast.error(msg));
 
     return;
   }
@@ -246,7 +246,8 @@ const newCustomer = res?.data || {
 };
 
 // ✅ SUCCESS
-alert("✅ Customer saved successfully!");
+toast.success("Customer saved successfully!");
+navigate("/customer-list");
 
 // 🔥 SEND DATA BACK TO MODAL
 if (onSuccess) {
@@ -262,7 +263,7 @@ setSubmitted(true);
     console.error(err);
 
     // ❌ API ERROR (optional but good)
-    alert("❌ Failed to save customer. Please try again.");
+    toast.error("Failed to save customer. Please try again.");
   }
 };
   const grid2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };

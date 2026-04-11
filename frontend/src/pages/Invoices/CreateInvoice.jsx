@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 import CustomerModal from "../../components/CustomerModal";
 
 
@@ -131,7 +132,7 @@ const TextInput = ({ value, onChange, type = "text", readOnly }) => (
   />
 );
 
-const SelectInput = ({ value, onChange, options,  }) => (
+const SelectInput = ({ value, onChange, options, }) => (
   <select
     value={value}
     onChange={onChange}
@@ -189,7 +190,7 @@ const OtpInput = ({ value, onChange, length, numbersOnly = false }) => (
 );
 
 const emptyAddress = {
-  company_name: "", customer_gstin: "",  customer_address_line1: "", customer_address_line2: "",
+  company_name: "", customer_gstin: "", customer_address_line1: "", customer_address_line2: "",
   customer_city: "", customer_state: "", customer_state_code: "", customer_pincode: "", customer_email: "", customer_phone: "",
   place_of_supply: "", place_of_supply_code: "",
 };
@@ -201,7 +202,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
       <Field label={customerType === "B2B" ? "Company / Name" : "Company Name"} required={fieldRules.company_name}>
-        <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)}/>
+        <TextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)} />
       </Field>
       <Field label="Email" required={fieldRules.customer_email} hint={!fieldRules.customer_email ? "optional" : undefined}>
         <TextInput type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="billing@company.com" />
@@ -218,7 +219,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
           <OtpInput value={form.customer_gstin || ""} onChange={(v) => update("customer_gstin", v)} length={15} />
         </Field>
       )}
-     
+
       <Field label="Address Line 1" required={fieldRules.customer_address_line1}>
         <TextInput value={form.customer_address_line1} onChange={(e) => update("customer_address_line1", e.target.value)} placeholder="Building, Street, Area" />
       </Field>
@@ -243,90 +244,90 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
 );
 
 export default function CreateInvoice() {
-   const [profile, setProfile] = useState();
-   const { user } = useAuth();  
-  const [customers, setCustomers] =useState([]);
-  const [invoiceNo, setInvoiceNo] =useState("");
-  const [invoiceDate, setInvoiceDate] =useState(new Date().toISOString().split("T")[0]);
-  const [supplyType, setSupplyType] =useState("Outward");
-  const [revCharge, setRevCharge] =useState("no");
-  const [paymentTerms, setPaymentTerms] =useState("Tax Invoice");
+  const [profile, setProfile] = useState();
+  const { user } = useAuth();
+  const [customers, setCustomers] = useState([]);
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [supplyType, setSupplyType] = useState("Outward");
+  const [revCharge, setRevCharge] = useState("no");
+  const [paymentTerms, setPaymentTerms] = useState("Tax Invoice");
 
   // Customer type — auto-derived from GSTIN
-  const [customerType, setCustomerType] =useState("B2C");
+  const [customerType, setCustomerType] = useState("B2C");
   const fieldRules = getFieldRules(customerType);
 
-  const [ewayEnabled, setEwayEnabled] =useState(false);
-  const [docType, setDocType] =useState("");
-  const [subSupplyType, setSubSupplyType] =useState("Supply");
-  const [transporterName, setTransporterName] =useState("");
-  const [transporterDocNo, setTransporterDocNo] =useState("");
-  const [vehicleNo, setVehicleNo] =useState("");
-  const [from, setFrom] =useState("");
-  const [deliveryMode, setDeliveryMode] =useState("1");
-  const [approximateDistance, setApproximateDistance] =useState("");
-const [customerModal, setCustomerModal] = useState(false);
+  const [ewayEnabled, setEwayEnabled] = useState(false);
+  const [docType, setDocType] = useState("");
+  const [subSupplyType, setSubSupplyType] = useState("Supply");
+  const [transporterName, setTransporterName] = useState("");
+  const [transporterDocNo, setTransporterDocNo] = useState("");
+  const [vehicleNo, setVehicleNo] = useState("");
+  const [from, setFrom] = useState("");
+  const [deliveryMode, setDeliveryMode] = useState("1");
+  const [approximateDistance, setApproximateDistance] = useState("");
+  const [customerModal, setCustomerModal] = useState(false);
   // const [customers] =useState([
   //   { id: 1, company_name: "ABC Industries Pvt Ltd", gstin: "27ABCDE1234F1Z5", customer_address_line1: "101 Industrial Zone", customer_address_line2: "", customer_city: "Mumbai", customer_state: "Maharashtra", customer_state_code: "27", customer_pincode: "400001", customer_email: "abc@example.com", customer_phone: "9876543210", customer_pan: "ABCDE1234F", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
   //   { id: 2, company_name: "XYZ Traders", gstin: "27PQRSX5678L1Z2", customer_address_line1: "45 Trade Center", customer_address_line2: "Sector 5", customer_city: "Pune", customer_state: "Maharashtra", customer_state_code: "27", customer_pincode: "411001", customer_email: "xyz@traders.com", customer_phone: "9123456789", customer_pan: "", place_of_supply: "Maharashtra", place_of_supply_code: "27" },
   // ]);
-  const [selectedCustomer, setSelectedCustomer] =useState(null);
-  const [customerID, setCustomerID] =useState(null);
-  const [showCustDropdown, setShowCustDropdown] =useState(false);
-  const [custSearch, setCustSearch] =useState("");
-  const [billForm, setBillForm] =useState({ ...emptyAddress });
-  const [shipForm, setShipForm] =useState({ ...emptyAddress });
-  const [sameAsBilling, setSameAsBilling] =useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerID, setCustomerID] = useState(null);
+  const [showCustDropdown, setShowCustDropdown] = useState(false);
+  const [custSearch, setCustSearch] = useState("");
+  const [billForm, setBillForm] = useState({ ...emptyAddress });
+  const [shipForm, setShipForm] = useState({ ...emptyAddress });
+  const [sameAsBilling, setSameAsBilling] = useState(true);
 
-   
-  
-    const loadCustomers = async () => {
-      const res = await window.electronAPI.getCustomers();
-      console.log(res);
-  
-      if (res.success) {
-        setCustomers(res.data);
-      } else {
-        console.error(res.error);
+
+
+  const loadCustomers = async () => {
+    const res = await window.electronAPI.getCustomers();
+    console.log(res);
+
+    if (res.success) {
+      setCustomers(res.data);
+    } else {
+      console.error(res.error);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+
+  useEffect(() => {
+    if (sameAsBilling) {
+      setShipForm({ ...billForm });
+    }
+  }, [sameAsBilling, billForm]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const data = await window.electronAPI.getProfile(user.id);
+      if (data) {
+        setProfile(data);
       }
     };
 
-    useEffect(() => {
-      loadCustomers();
-    }, []);
-
-
-    useEffect(() => {
-  if (sameAsBilling) {
-    setShipForm({ ...billForm });
-  }
-}, [sameAsBilling, billForm]);
-
-     useEffect(() => {
-      const loadProfile = async () => {
-        const data = await window.electronAPI.getProfile(user.id);
-        if (data) {
-          setProfile(data);
-        }
-      };
-
-      const loadInvoiceNo = async () => {
-         const res = await window.electronAPI.getInvoiceNo();
-        if (res) {
-          setInvoiceNo(res.data);
-        }
-
+    const loadInvoiceNo = async () => {
+      const res = await window.electronAPI.getInvoiceNo();
+      if (res) {
+        setInvoiceNo(res.data);
       }
-      loadProfile();
-      loadInvoiceNo();
-  
-    }, []);
+
+    }
+    loadProfile();
+    loadInvoiceNo();
+
+  }, []);
 
   const filteredCusts = customers.filter((c) =>
     c.customer_name.toLowerCase().includes(custSearch.toLowerCase())
   );
 
-   const resetForm = async () => {
+  const resetForm = async () => {
     setSelectedCustomer(null);
     setCustomerID(null);
     setCustSearch("");
@@ -364,68 +365,72 @@ const [customerModal, setCustomerModal] = useState(false);
     setSubSupplyType("Supply");
 
     setInvoiceDate(new Date().toISOString().split("T")[0]);
-     const res = await window.electronAPI.getInvoiceNo();
-        if (res) {
-          setInvoiceNo(res.data);
-        }
+    const res = await window.electronAPI.getInvoiceNo();
+    if (res) {
+      setInvoiceNo(res.data);
+    }
   };
 
   const handleSaveInvoice = async () => {
-  try {
-    const data = {
-      invoiceNo,
-      invoiceDate,
-      paymentTerms,
-      supplyType,
-      subSupplyType,
-      revCharge,
-      customerType,
+    try {
+      const data = {
+        invoiceNo,
+        invoiceDate,
+        paymentTerms,
+        supplyType,
+        subSupplyType,
+        revCharge,
+        customerType,
 
-      billForm,
-      shipForm,
-      sameAsBilling,
+        billForm,
+        shipForm,
+        sameAsBilling,
 
-      items,
+        items,
 
-      subtotal,
-      totalDiscount,
-      taxableAmount,
-      cgst,
-      sgst,
-      igst,
-      roundOff,
-      grandTotal,
+        subtotal,
+        totalDiscount,
+        taxableAmount,
+        cgst,
+        sgst,
+        igst,
+        roundOff,
+        grandTotal,
 
-      ewayEnabled,
-      docType,
-      approximateDistance,
-      transporterName,
-      transporterDocNo,
-      vehicleNo,
-      deliveryMode,
-      from,
-      customerID,
-    };
+        ewayEnabled,
+        docType,
+        approximateDistance,
+        transporterName,
+        transporterDocNo,
+        vehicleNo,
+        deliveryMode,
+        from,
+        customerID,
+      };
 
 
-    console.log("📤 Sending to backend:", data);
+      console.log("📤 Sending to backend:", data);
 
-    const res = await window.electronAPI.saveInvoice(data);
+      const res = await window.electronAPI.saveInvoice(data);
 
-    if (res?.success) {
-      alert(`✅ Invoice Saved (ID: ${res.data.invoice_no})`);
-      
-      // Optional: Reset form
-      resetForm();
-    } else {
-      alert("❌ Failed to save invoice");
+      if (res?.success) {
+        toast.success(`✅ Invoice Saved (ID: ${res.data.invoice_no})`);
+
+        // Optional: Reset form
+        resetForm();
+      } else {
+        toast.error("❌ Failed to save invoice", {
+          duration: 4000,
+        });
+      }
+
+    } catch (error) {
+      console.error("❌ Save Error:", error);
+      toast.error(err?.message || "Something went wrong", {
+        duration: 4000,
+      });
     }
-
-  } catch (error) {
-    console.error("❌ Save Error:", error);
-    alert("Something went wrong");
-  }
-};
+  };
 
   const selectCustomer = (c) => {
     setSelectedCustomer(c);
@@ -464,68 +469,68 @@ const [customerModal, setCustomerModal] = useState(false);
     }
   };
 
-const handleSameAsBilling = (checked) => {
-  setSameAsBilling(checked);
+  const handleSameAsBilling = (checked) => {
+    setSameAsBilling(checked);
 
-  if (checked) {
-    // copy billing → shipping
-    setShipForm({ ...billForm });
-  } else {
-    // clear shipping
-    setShipForm({ ...emptyAddress });
-  }
-};
+    if (checked) {
+      // copy billing → shipping
+      setShipForm({ ...billForm });
+    } else {
+      // clear shipping
+      setShipForm({ ...emptyAddress });
+    }
+  };
 
-  const [items, setItems] =useState([
+  const [items, setItems] = useState([
     { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 },
   ]);
-const updateItem = (i, field, value) => {
-  setItems((prev) =>
-    prev.map((item, index) =>
-      index === i ? { ...item, [field]: value } : item
-    )
-  );
-};
+  const updateItem = (i, field, value) => {
+    setItems((prev) =>
+      prev.map((item, index) =>
+        index === i ? { ...item, [field]: value } : item
+      )
+    );
+  };
   const addItem = () => setItems([...items, { description: "", itemCode: "", hsn: "", qty: 1, rate: 0, discount: 0, unit: "NOS", gstRate: 18 }]);
   const removeItem = (i) => items.length > 1 && setItems(items.filter((_, idx) => idx !== i));
 
-const itemTaxable = (item) => {
-  const qty = Number(item.qty) || 0;
-  const rate = Number(item.rate) || 0;
-  const discount = Number(item.discount) || 0;
+  const itemTaxable = (item) => {
+    const qty = Number(item.qty) || 0;
+    const rate = Number(item.rate) || 0;
+    const discount = Number(item.discount) || 0;
 
-  const gross = qty * rate;
-  const discAmt = discount > 0 ? (gross * discount) / 100 : 0;
+    const gross = qty * rate;
+    const discAmt = discount > 0 ? (gross * discount) / 100 : 0;
 
-  return gross - discAmt;
-};
-const itemTax = (item) => {
-  const gst = Number(item.gstRate) || 0;
-  return (itemTaxable(item) * gst) / 100;
-};
+    return gross - discAmt;
+  };
+  const itemTax = (item) => {
+    const gst = Number(item.gstRate) || 0;
+    return (itemTaxable(item) * gst) / 100;
+  };
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
 
-const subtotal = items.reduce((s, item) => {
-  const qty = Number(item.qty) || 0;
-  const rate = Number(item.rate) || 0;
-  return s + qty * rate;
-}, 0);
+  const subtotal = items.reduce((s, item) => {
+    const qty = Number(item.qty) || 0;
+    const rate = Number(item.rate) || 0;
+    return s + qty * rate;
+  }, 0);
 
-const totalDiscount = items.reduce((s, item) => {
-  const qty = Number(item.qty) || 0;
-  const rate = Number(item.rate) || 0;
-  const discount = Number(item.discount) || 0;
-  return s + (qty * rate * discount) / 100;
-}, 0);
+  const totalDiscount = items.reduce((s, item) => {
+    const qty = Number(item.qty) || 0;
+    const rate = Number(item.rate) || 0;
+    const discount = Number(item.discount) || 0;
+    return s + (qty * rate * discount) / 100;
+  }, 0);
   const taxableAmount = subtotal - totalDiscount;
   const grandTaxable = taxableAmount;
-const BUSINESS_customer_state_CODE = profile?.state_code;
-const placeOfSupplyCode =
-  shipForm?.place_of_supply_code ||
-  shipForm?.customer_state_code ||
-  billForm?.place_of_supply_code ||
-  billForm?.customer_state_code;
-     const isInter = placeOfSupplyCode !== BUSINESS_customer_state_CODE;
+  const BUSINESS_customer_state_CODE = profile?.state_code;
+  const placeOfSupplyCode =
+    shipForm?.place_of_supply_code ||
+    shipForm?.customer_state_code ||
+    billForm?.place_of_supply_code ||
+    billForm?.customer_state_code;
+  const isInter = placeOfSupplyCode !== BUSINESS_customer_state_CODE;
   const totalItemTax = items.reduce((s, item) => s + itemTax(item), 0);
   const cgst = isInter ? 0 : totalItemTax / 2;
   const sgst = isInter ? 0 : totalItemTax / 2;
@@ -548,7 +553,7 @@ const placeOfSupplyCode =
 
   return (
     <div style={{ width: "100%", margin: "0" }}>
-   
+
 
       {/* Company Banner */}
       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
@@ -595,7 +600,7 @@ const placeOfSupplyCode =
 
         {/* Customer Search row + Customer Type side by side */}
         <div style={{ marginBottom: "20px", paddingBottom: "20px", borderBottom: "1.5px dashed #e5e7eb" }}>
-       <div style={{ display: "grid", gridTemplateColumns: "0.7fr 1fr", gap: "16px", alignItems: "end" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "0.7fr 1fr", gap: "16px", alignItems: "end" }}>
 
             {/* Select Existing Customer */}
             <Field label="Select Existing Customer">
@@ -626,26 +631,26 @@ const placeOfSupplyCode =
                       ))}
                     </div>
                     <div style={{ padding: "10px 14px", borderTop: "1.5px solid #e5e7eb" }}>
-                   <button
- onClick={() => {
-  setShowCustDropdown(false);
+                      <button
+                        onClick={() => {
+                          setShowCustDropdown(false);
 
 
-  setTimeout(() => {
-    setCustomerModal(true);
-  }, 100);
-}}
-  style={{
-    background: "none",
-    border: "none",
-    color: "#3b82f6",
-    fontSize: "13px",
-    fontWeight: 600,
-    cursor: "pointer",
-  }}
->
-  + Add New Customer
-</button>
+                          setTimeout(() => {
+                            setCustomerModal(true);
+                          }, 100);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#3b82f6",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        + Add New Customer
+                      </button>
                     </div>
                   </div>
                 )}
@@ -653,13 +658,13 @@ const placeOfSupplyCode =
             </Field>
 
             {/* Customer Type — disabled read-only pill, auto-detected from GSTIN */}
-         <Field label="Customer Type">
-  <TextInput
-    value={customerType}
-    readOnly
-    placeholder="Customer Type"
-  />
-</Field>
+            <Field label="Customer Type">
+              <TextInput
+                value={customerType}
+                readOnly
+                placeholder="Customer Type"
+              />
+            </Field>
           </div>
         </div>
 
@@ -676,48 +681,48 @@ const placeOfSupplyCode =
                 Same as Billing
               </label>
             </div>
-           {sameAsBilling ? (
-  <div
-    style={{
-      padding: "16px 18px",
-      background: "#f0f9ff",
-      borderRadius: "10px",
-      border: "1.5px solid #bae6fd",
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-      fontSize: "13px",
-      color: "#0369a1",
-      fontWeight: 600,
-    }}
-  >
-    <div
-      style={{
-        width: "28px",
-        height: "28px",
-        borderRadius: "50%",
-        background: "#0ea5e9",
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "16px",
-        fontWeight: 700,
-      }}
-    >
-      ✓
-    </div>
+            {sameAsBilling ? (
+              <div
+                style={{
+                  padding: "16px 18px",
+                  background: "#f0f9ff",
+                  borderRadius: "10px",
+                  border: "1.5px solid #bae6fd",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  fontSize: "13px",
+                  color: "#0369a1",
+                  fontWeight: 600,
+                }}
+              >
+                <div
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    background: "#0ea5e9",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                  }}
+                >
+                  ✓
+                </div>
 
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <span>Shipping address same as billing</span>
-      <span style={{ fontSize: "11px", color: "#0284c7", fontWeight: 500 }}>
-        Uncheck to add separate shipping address
-      </span>
-    </div>
-  </div>
-) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span>Shipping address same as billing</span>
+                  <span style={{ fontSize: "11px", color: "#0284c7", fontWeight: 500 }}>
+                    Uncheck to add separate shipping address
+                  </span>
+                </div>
+              </div>
+            ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
-              
+
                 <Field label="Address Line 1">
                   <TextInput value={shipForm.customer_address_line1} onChange={(e) => updateShipForm("customer_address_line1", e.target.value)} placeholder="Building, Street" />
                 </Field>
@@ -803,23 +808,23 @@ const placeOfSupplyCode =
       {/* Items Table */}
       <Section title="Items / Services" icon="📦">
         <div style={{ overflowX: "auto" }}>
-<table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
 
-  <colgroup>
-  <col style={{ width: "30px" }} />
-  <col />
-  <col style={{ width: "80px" }} />
-  <col style={{ width: "75px" }} />
-  <col style={{ width: "70px" }} />
-  <col style={{ width: "95px" }} />
-  <col style={{ width: "60px" }} />
-  <col style={{ width: "100px" }} />
-  <col style={{ width: "65px" }} />
-  <col style={{ width: "90px" }} />
-  <col style={{ width: "95px" }} />
-  <col style={{ width: "36px" }} />
-</colgroup>
-              <thead>
+            <colgroup>
+              <col style={{ width: "30px" }} />
+              <col />
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "70px" }} />
+              <col style={{ width: "95px" }} />
+              <col style={{ width: "60px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "65px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "95px" }} />
+              <col style={{ width: "36px" }} />
+            </colgroup>
+            <thead>
               <tr style={{ background: "#f8fafc" }}>
                 {["#", "Description", "HSN/SAC", "Unit", "Qty", "Rate (₹)", "Disc %", "Taxable (₹)", "GST %", "Tax (₹)", "Total (₹)", ""].map((h) => (
                   <th key={h} style={{ padding: "8px 8px", textAlign: ["Taxable (₹)", "Tax (₹)", "Total (₹)", "Rate (₹)"].includes(h) ? "right" : "left", fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", color: "#6b7280", textTransform: "uppercase", borderBottom: "1.5px solid #e5e7eb", whiteSpace: "nowrap" }}>{h}</th>
@@ -829,40 +834,40 @@ const placeOfSupplyCode =
             <tbody>
               {items.map((item, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-<td style={{ padding: "6px 8px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
-<td style={{ padding: "3px 4px", overflow: "hidden" }}>
-  <input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...tableInputStyle }} />                  </td>                
+                  <td style={{ padding: "6px 8px", color: "#9ca3af", fontWeight: 600, fontSize: "12px" }}>{i + 1}</td>
+                  <td style={{ padding: "3px 4px", overflow: "hidden" }}>
+                    <input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Item description" style={{ ...tableInputStyle }} />                  </td>
                   <td style={{ padding: "5px 6px", width: "80px" }}>
-<input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} style={{ ...tableInputStyle }} />
+                    <input value={item.hsn} onChange={(e) => updateItem(i, "hsn", e.target.value)} style={{ ...tableInputStyle }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "75px" }}>
-<select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...tableInputStyle }}>
-                        {units.map((u) => <option key={u}>{u}</option>)}
+                    <select value={item.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ ...tableInputStyle }}>
+                      {units.map((u) => <option key={u}>{u}</option>)}
                     </select>
                   </td>
                   <td style={{ padding: "5px 6px", width: "80px" }}>
-                  <input type="number" value={item.qty || ""}onChange={(e) =>
-  updateItem(i, "qty", e.target.value === "" ? "" : Number(e.target.value))
-} style={{ ...tableInputStyle, textAlign: "center" }} />
+                    <input type="number" value={item.qty || ""} onChange={(e) =>
+                      updateItem(i, "qty", e.target.value === "" ? "" : Number(e.target.value))
+                    } style={{ ...tableInputStyle, textAlign: "center" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "100px" }}>
-                    <input type="number" value={item.rate}onChange={(e) =>
-  updateItem(i, "rate", e.target.value === "" ? "" : Number(e.target.value))
-} style={{ ...tableInputStyle, textAlign: "right" }} />                  </td>
+                    <input type="number" value={item.rate} onChange={(e) =>
+                      updateItem(i, "rate", e.target.value === "" ? "" : Number(e.target.value))
+                    } style={{ ...tableInputStyle, textAlign: "right" }} />                  </td>
                   <td style={{ padding: "5px 6px", width: "65px" }}>
                     <input type="number" value={item.discount} min={0} max={100} onChange={(e) =>
-  updateItem(i, "discount", e.target.value === "" ? "" : Number(e.target.value))
-} style={{ ...tableInputStyle, textAlign: "center" }} />
+                      updateItem(i, "discount", e.target.value === "" ? "" : Number(e.target.value))
+                    } style={{ ...tableInputStyle, textAlign: "center" }} />
                   </td>
-<td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  <td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 600, color: "#374151", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTaxable(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: "5px 6px", width: "70px" }}>
-<select value={item.gstRate} onChange={(e) => updateItem(i, "gstRate", Number(e.target.value))} style={{ ...tableInputStyle }}>                      {gstOptions.map((r) => <option key={r} value={r}>{r}%</option>)}
+                    <select value={item.gstRate} onChange={(e) => updateItem(i, "gstRate", Number(e.target.value))} style={{ ...tableInputStyle }}>                      {gstOptions.map((r) => <option key={r} value={r}>{r}%</option>)}
                     </select>
                   </td>
-<td style={{ padding: "4px 8px", textAlign: "right", color: "#374151", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTax(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  <td style={{ padding: "4px 8px", textAlign: "right", color: "#374151", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTax(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
-<td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 700, color: "#1e3a5f", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTotal(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  <td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 700, color: "#1e3a5f", whiteSpace: "nowrap", fontSize: "12px" }}>                    ₹ {itemTotal(item).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: "5px 6px", textAlign: "center" }}>
                     <button onClick={() => removeItem(i)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "16px", padding: "4px 6px", borderRadius: "6px" }} title="Remove">×</button>
@@ -976,36 +981,36 @@ const placeOfSupplyCode =
       {/* Footer Actions */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingBottom: "40px" }}>
         <button style={{ padding: "11px 28px", border: "1.5px solid #d1d5db", borderRadius: "8px", background: "#fff", fontSize: "13.5px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Cancel</button>
-        <button  onClick={handleSaveInvoice} style={{ padding: "11px 28px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13.5px", fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.3px" }}>💾 Save Invoice</button>
+        <button onClick={handleSaveInvoice} style={{ padding: "11px 28px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13.5px", fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.3px" }}>💾 Save Invoice</button>
       </div>
 
 
-{customerModal && (
-  <CustomerModal
-    onClose={() => setCustomerModal(false)}
-   onCustomerCreated={(newCustomer) => {
-  setCustomerModal(false);
+      {customerModal && (
+        <CustomerModal
+          onClose={() => setCustomerModal(false)}
+          onCustomerCreated={(newCustomer) => {
+            setCustomerModal(false);
 
-  // ✅ ADD IMMEDIATELY TO LIST (IMPORTANT FIX)
-  setCustomers((prev) => [newCustomer, ...prev]);
+            // ✅ ADD IMMEDIATELY TO LIST (IMPORTANT FIX)
+            setCustomers((prev) => [newCustomer, ...prev]);
 
-  // optional (can keep)
-  loadCustomers();
+            // optional (can keep)
+            loadCustomers();
 
-  // ✅ auto select
-  setSelectedCustomer(newCustomer);
-  setBillForm({ ...newCustomer });
-  setCustomerID(newCustomer.id);
+            // ✅ auto select
+            setSelectedCustomer(newCustomer);
+            setBillForm({ ...newCustomer });
+            setCustomerID(newCustomer.id);
 
-  setCustomerType(
-    newCustomer.customer_gstin &&
-    newCustomer.customer_gstin.trim().length === 15
-      ? "B2B"
-      : "B2C"
-  );
-}}
-  />
-)}
+            setCustomerType(
+              newCustomer.customer_gstin &&
+                newCustomer.customer_gstin.trim().length === 15
+                ? "B2B"
+                : "B2C"
+            );
+          }}
+        />
+      )}
 
     </div>
   );

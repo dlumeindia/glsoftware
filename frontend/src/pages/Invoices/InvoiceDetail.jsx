@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 import { FiPrinter, FiShare2, FiArrowLeft, FiFileText, FiDownload } from "react-icons/fi";
 
 
@@ -204,8 +205,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     company_name: invoice?.bill_company_name,
     gstin: invoice?.bill_gstin,
     pan: invoice?.bill_pan,
-    address_line1: invoice?.bill_address_line1,
-    address_line2: invoice?.bill_address_line2,
+    address_line1: invoice?.bill_address1,
+    address_line2: invoice?.bill_address2,
     city: invoice?.bill_city,
     state: invoice?.bill_state,
     state_code: invoice?.bill_state_code,
@@ -218,8 +219,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
     company_name: invoice?.ship_company_name,
     gstin: invoice?.ship_gstin,
     pan: invoice?.ship_pan,
-    address_line1: invoice?.ship_address_line1,
-    address_line2: invoice?.ship_address_line2,
+    address_line1: invoice?.ship_address1,
+    address_line2: invoice?.ship_address2,
     city: invoice?.ship_city,
     state: invoice?.ship_state,
     state_code: invoice?.ship_state_code,
@@ -336,8 +337,8 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
   const itemTax = (item) => (itemTaxable(item) * item.gst_rate) / 100;
   const itemTotal = (item) => itemTaxable(item) + itemTax(item);
 
-  const subtotal = items.reduce((s, item) => s + item.qty * item.rate, 0);
-  const totalDiscount = items.reduce(
+  const subtotal = itemsState.reduce((s, item) => s + item.qty * item.rate, 0);
+  const totalDiscount = itemsState.reduce(
     (s, item) => s + (item.qty * item.rate * (item.discount || 0)) / 100,
     0,
   );
@@ -419,42 +420,44 @@ const isInter =
       const res = await window.electronAPI.updateInvoice(data);
 
       if (res?.success) {
-        alert(`✅ Invoice Saved (Invoice No: ${res.invoice_no})`);
+        toast.success(`✅ Invoice Saved (Invoice No: ${res.invoice_no})`);
+
+        navigate(0);
         
-        onSave({
-          ...invoice,
-          invoiceNo,
-          invoiceDate,
-          invoiceType,
-          supplyType,
-          subSupplyType,
-          revCharge,
-          customer: billForm,
-          shipping: sameAsBilling ? billForm : shipForm,
-          itemsState,
-          pfCharge,
-          termsAndConditions,
-          ewayBill: ewayEnabled
-            ? {
-                ...invoice?.ewayBill,
-                docType,
-                approximateDistance,
-                transporterName,
-                transporterDocNo,
-                vehicleNo,
-                from,
-                deliveryMode,
-              }
-            : null,
-        });
+        // onSave({
+        //   ...invoice,
+        //   invoiceNo,
+        //   invoiceDate,
+        //   invoiceType,
+        //   supplyType,
+        //   subSupplyType,
+        //   revCharge,
+        //   customer: billForm,
+        //   shipping: sameAsBilling ? billForm : shipForm,
+        //   itemsState,
+        //   pfCharge,
+        //   termsAndConditions,
+        //   ewayBill: ewayEnabled
+        //     ? {
+        //         ...invoice?.ewayBill,
+        //         docType,
+        //         approximateDistance,
+        //         transporterName,
+        //         transporterDocNo,
+        //         vehicleNo,
+        //         from,
+        //         deliveryMode,
+        //       }
+        //     : null,
+        // });
 
         // Optional: Reset form
         // resetForm();
       } else {
-        alert("❌ Failed to save invoice");
+        toast.error("❌ Failed to save invoice");
       }
     } catch (error) {
-      alert(error);
+      toast.error(error);
     }
   };
 
@@ -1725,6 +1728,7 @@ const isInter =
 export default function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+   const [isEditing, setIsEditing] = useState(false);
    const { user } = useAuth();  
     const [profile, setProfile] = useState();
     const [customer, setCustomer] = useState();
@@ -1734,9 +1738,9 @@ export default function InvoiceDetail() {
   // ── Added: mode & invoice state for edit toggle ──
   const [mode, setMode] = useState("view");
   const [invoice, setInvoice] = useState(null);
-  const [toast, setToast] = useState(false);
 
     useEffect(() => {
+       if (!id || isEditing) return;
     if (id) {
       const numericId = Number(id);
       window.electronAPI.getInvoiceById(numericId).then((res) => {
@@ -1747,7 +1751,7 @@ export default function InvoiceDetail() {
       }
       });
     }
-  }, [id]);
+  }, [id, isEditing]);
 
    useEffect(() => {
     const loadProfile = async () => {
@@ -1765,17 +1769,19 @@ export default function InvoiceDetail() {
     setCustomer(updated.customer); // customer
     setItems(updated.items); 
     setMode("view");  
-    setToast("Invoice updated successfully!");
-    setTimeout(() => setToast(false), 3000);
+      setIsEditing(true);
+
+    toast.success(`✅ Invoice updated `);
   };
 
     const handleDelivery = async () => {
       try {
+        console.log("clicked");
 
           if (invoice?.challan === 1) {
-          navigate(`/delivery-challan/${id}`);
-          return;
-        }
+            navigate(`/delivery-challan/${id}`);
+            return;
+          }
         const payload = {
           invoice_id: id,
           challanNo: `CHL-${Date.now()}`,
@@ -1791,15 +1797,15 @@ export default function InvoiceDetail() {
         const res = await window.electronAPI.deliveryChallan(payload );
 
         if (res.success) {
-          alert("✅ Delivery Challan Created");
+          toast.success("✅ Delivery Challan Created");
 
           // redirect to view page
-          navigate(`/delivery-challan/${res.id}`);
+          navigate(`/delivery-challan/${id}`);
         } else {
-          alert("❌ Failed to create challan");
+          toast.error("❌ Failed to create challan");
         }
       } catch (error) {
-        alert("Something went wrong");
+        toast.error("Something went wrong");
       }
     };
 
@@ -1917,6 +1923,7 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
   const grandBeforeRound = grandTaxable + cgst + sgst + igst;
   const grandTotal = Math.round(grandBeforeRound);
   const roundOff = grandTotal - grandBeforeRound;
+ 
 
   const taxSummary = items.reduce((acc, item) => {
     const key = item.hsn || "N/A";
@@ -1943,15 +1950,7 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
 
       <div style={{ width: "100%", margin: "0" }}>
 
-        {/* Toast — only addition to original view */}
-        {toast && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "10px 16px" }}>
-              <span style={{ fontSize: "16px" }}>✅</span>
-              <span style={{ fontSize: "13px", fontWeight: 600, color: "#16a34a" }}>Invoice updated successfully!</span>
-            </div>
-          </div>
-        )}
+      
 
         {/* ── Top Action Bar ── */}
         <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
@@ -2096,10 +2095,21 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
               <MetaRow label="Supply Type" value={invoice?.supply_type ? invoice?.supply_type.charAt(0).toUpperCase() + invoice?.supply_type.slice(1) : "—"} />
               <MetaRow label="Sub-Supply Type" value={invoice?.sub_supply_type} />
               <MetaRow label="Rev. Charge" value={invoice?.reverse_charge} />
-              <MetaRow label="Place of Supply" value={`${invoice?.ship_state} (${invoice?.ship_state_code})`} />
+              <MetaRow
+                    label="Place of Supply"
+                    value={
+                      invoice?.ship_state
+                        ? `${invoice.ship_state}${
+                            invoice?.ship_state_code ? ` (${invoice.ship_state_code})` : ""
+                          }`
+                        : `${invoice?.bill_state}${
+                            invoice?.bill_state_code ? ` (${invoice.bill_state_code})` : ""
+                          }`
+                    }
+                  />
 
               {/* ── E-Way Bill No. ── */}
-          {invoice?.eway_enabled && (
+          {invoice?.eway_enabled === 1 && (
   <>
     <div style={{ height: "1px", background: "#e5e7eb", margin: "7px 0" }} />
 

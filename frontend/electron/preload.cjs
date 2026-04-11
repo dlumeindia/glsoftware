@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updateInvoice: (data) => ipcRenderer.invoke("update-invoice", data),
   getInvoices: (data) => ipcRenderer.invoke("get-invoices", data),
   deleteInvoice: (id) => ipcRenderer.invoke("delete-invoice", id),
-  markInvoicePaid: (id) => ipcRenderer.invoke("mark-invoice-paid", id),
+  markInvoicePaid: (payload) => ipcRenderer.invoke("mark-invoice-paid", payload),
   saveEway: (payload) => ipcRenderer.invoke("save-eway", payload),
   getInvoiceById: (id) => ipcRenderer.invoke("get-invoice-by-id", id),
    generatePDF: (payload) => ipcRenderer.invoke("generate-pdf", payload),  

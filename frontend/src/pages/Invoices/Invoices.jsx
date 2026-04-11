@@ -3,6 +3,7 @@ import { FiPlus, FiX, FiCheckCircle, FiTruck } from "react-icons/fi";
 import { useState } from "react";
 import Table from "../../components/Table";
 import Button from "../../components/Button";
+import ConfirmBox from "../../components/ConfirmBox";
   import { useEffect } from "react";
 
 
@@ -149,7 +150,8 @@ function EWayBillModal({ invoice, onClose, onGenerate }) {
 function EWayBillButton({ invoice, onOpen }) {
   if (invoice.ewayBill) {
     return (
-<div style={{
+<button onClick={(e) => { e.stopPropagation(); onOpen(invoice); }}
+      style={{
   display: "inline-flex",   // ✅ important (not full width)
   alignItems: "center",
   gap: "4px",               // smaller spacing
@@ -162,8 +164,9 @@ function EWayBillButton({ invoice, onOpen }) {
   color: "#16a34a",
   whiteSpace: "nowrap"
 }}>
-  <FiCheckCircle size={11} /> E-Way
-</div>       
+       <FiCheckCircle size={11} /> E-Way 
+    </button> 
+     
     );
   }
   return (
@@ -213,6 +216,9 @@ const Invoices = () => {
   const [fromDate, setFromDate] = useState("");
 const [toDate, setToDate] = useState("");
 
+ const [confirmOpen, setConfirmOpen] = useState(false);
+const [selectedId, setSelectedId] = useState(null);
+
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [ewayModal, setEwayModal] = useState(null);
@@ -220,11 +226,7 @@ const [toDate, setToDate] = useState("");
   
 
  const handleDelete = async (invoice) => {
-  const confirmDelete = window.confirm(
-    `Are you sure you want to delete Invoice #${invoice.number}?`
-  );
-
-  if (!confirmDelete) return; // ❌ stop if user clicks Cancel
+ 
 
   const res = await window.electronAPI.deleteInvoice(invoice.id);
 
@@ -239,11 +241,9 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
   const confirmMsg = isPaid
     ? `Mark Invoice #${invoice?.number} as Unpaid?`
     : `Mark Invoice #${invoice?.number} as Paid?`;
+ 
 
-  const confirmAction = window.confirm(confirmMsg);
-  if (!confirmAction) return;
-
-  const res = await window.electronAPI.updateInvoiceStatus({
+  const res = await window.electronAPI.markInvoicePaid({
     id: invoiceId,
     status: isPaid ? "Unpaid" : "Paid",
   });
@@ -346,6 +346,29 @@ const filteredInvoices = invoices.filter((inv) => {
 
   return (
     <div className="space-y-6">
+        <ConfirmBox
+  open={confirmOpen}
+  title="Delete Customer"
+  message="Are you sure you want to delete this customer?"
+  onCancel={() => setConfirmOpen(false)}
+  onConfirm={async () => {
+    setConfirmOpen(false);
+
+    try {
+        const res = await window.electronAPI.deleteInvoice(selectedId);
+
+     
+      if (res.success) {
+        setInvoices((prev) => prev.filter((i) => i.id !== selectedId));
+        toast.success("Invoice deleted successfully");
+      } else {
+        toast.error("Failed to delete Invoice");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+  }}
+/>
     <div className="flex items-center justify-between">
   <Button variant="navy" size="md" className="flex items-center gap-2" onClick={() => navigate("/create-invoice")}>
     <FiPlus size={16} /> Create Invoice
@@ -388,7 +411,10 @@ const filteredInvoices = invoices.filter((inv) => {
      data={filteredInvoices}
         searchPlaceholder="Search invoices..."
         onRowClick={(row) => navigate(`/invoice/${row.id}`)}
-        onDelete={handleDelete}
+        onDelete={(row) => {
+          setSelectedId(row.id);
+          setConfirmOpen(true);
+        }}
       
       />
 

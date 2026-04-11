@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import Table from "../../components/Table";
 import Button from "../../components/Button";
+import ConfirmBox from "../../components/ConfirmBox";
+import toast from "react-hot-toast";
 
 
 const columns = [
@@ -19,6 +21,8 @@ const columns = [
 const CustomerList = () => {
 const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
+ const [confirmOpen, setConfirmOpen] = useState(false);
+const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     loadCustomers();
@@ -48,6 +52,28 @@ const navigate = useNavigate();
 };
 
 return ( <div className="space-y-6">
+  <ConfirmBox
+  open={confirmOpen}
+  title="Delete Customer"
+  message="Are you sure you want to delete this customer?"
+  onCancel={() => setConfirmOpen(false)}
+  onConfirm={async () => {
+    setConfirmOpen(false);
+
+    try {
+      const res = await window.electronAPI.deleteCust(selectedId);
+
+      if (res.success) {
+        toast.success("Customer deleted successfully");
+        loadCustomers();
+      } else {
+        toast.error("Failed to delete customer");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+  }}
+/>
 
   {/* Header */}
   <div className="flex items-center justify-between">
@@ -70,21 +96,9 @@ return ( <div className="space-y-6">
   data={customers}
   searchPlaceholder="Search customers..."
   onRowClick={(row) => navigate(`/customers/${row.id}`)}
-onDelete={async (row) => {
-  const confirmDelete = window.confirm(
-    `Delete customer "${row.customer_name}"?`
-  );
-
-  if (!confirmDelete) return;
-
-  const res = await window.electronAPI.deleteCust(row.id);
-
-  if (res.success) {
-    alert("✅ Customer deleted successfully");
-    loadCustomers();
-  } else {
-    alert("❌ Failed to delete customer");
-  }
+onDelete={(row) => {
+  setSelectedId(row.id);
+  setConfirmOpen(true);
 }}
 />
 

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 
 const indianStates = [
   { code: "01", name: "Jammu & Kashmir" }, { code: "02", name: "Himachal Pradesh" },
@@ -47,7 +48,7 @@ const Field = ({ label, required, children, className = "" }) => (
 
 const TextInput = ({ value, onChange, placeholder, type = "text", readOnly }) => (
   <input
-    type={type} value={value} onChange={onChange}
+    type={type} value={value || ""} onChange={onChange}
     placeholder={placeholder} readOnly={readOnly}
     style={{ ...inputStyle, cursor: readOnly ? "not-allowed" : "text" }}
     onFocus={e => !readOnly && (e.target.style.borderColor = "#3b82f6")}
@@ -57,7 +58,7 @@ const TextInput = ({ value, onChange, placeholder, type = "text", readOnly }) =>
 
 const TextArea = ({ value, onChange, placeholder, rows = 3 }) => (
   <textarea
-    value={value} onChange={onChange} placeholder={placeholder} rows={rows}
+    value={value || ""} onChange={onChange} placeholder={placeholder} rows={rows}
     style={{ ...inputStyle, resize: "vertical", lineHeight: "1.6" }}
     onFocus={e => (e.target.style.borderColor = "#3b82f6")}
     onBlur={e => (e.target.style.borderColor = "#e5e7eb")}
@@ -76,7 +77,7 @@ const SelectInput = ({ value, onChange, options, placeholder }) => (
   </select>
 );
 
-const CharBoxInput = ({ length, value, onChange, numeric }) => {
+const CharBoxInput = ({ length, value = "", onChange, numeric }) => {
   const refs = useRef([]);
   const handleChange = (e, index) => {
     let val = e.target.value;
@@ -140,6 +141,7 @@ const SavedBadge = ({ show }) =>
 export default function Profile() {
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState(false);
   const [activeTab, setActiveTab] = useState("business");
 const [headerImage, setHeaderImage] = useState(null);
 
@@ -148,7 +150,7 @@ const handleHeaderUpload = (e) => {
   if (!file) return;
 
    if (file.size > 102400) {
-    alert("Image must be less than 100KB");
+    toast.error("Image must be less than 100KB");
     return;
   }
 
@@ -218,7 +220,7 @@ const handleHeaderUpload = (e) => {
   const pct = Math.round((filled / completionFields.length) * 100);
 
   const handleSave = async () => {
-  alert("✅ Profile saved successfully!");
+  
 
     const res = await window.electronAPI.saveProfile({
       userId: user.id,
@@ -229,7 +231,7 @@ const handleHeaderUpload = (e) => {
     });
 
     if (res.success) {
-      setSaved(true);
+      setToast(true);
       setTimeout(() => setSaved(false), 3000);
     }
 
@@ -239,7 +241,7 @@ const handleHeaderUpload = (e) => {
     const loadProfile = async () => {
       const data = await window.electronAPI.getProfile(user.id);
       if (data) {
-        setProfile(data);
+        setProfile(prev => ({ ...prev, ...data }));
         setHeaderImage(data.header_image);
       }
     };
@@ -247,10 +249,33 @@ const handleHeaderUpload = (e) => {
 
   }, []);
 
+  const Toast = ({ show, message }) => {
+    if (!show) return null;
+
+    return (
+      <div style={{
+        position: "fixed",
+        top: "20px",
+        right: "20px",
+        background: "#1e3a5f",
+        color: "#fff",
+        padding: "12px 18px",
+        borderRadius: "8px",
+        fontSize: "13px",
+        fontWeight: 600,
+        boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+        zIndex: 9999,
+        animation: "fadeIn 0.3s ease"
+      }}>
+        ✅ {message}
+      </div>
+    );
+  };
+
   return (
     <div style={{ width: "100%", margin: "0", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
-    
+    <Toast show={toast} message="Profile saved successfully!" />
 
       {/* Company Banner */}
       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
@@ -281,6 +306,7 @@ const handleHeaderUpload = (e) => {
           </div>
         </div>
       </div>
+
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "4px", marginBottom: "20px", background: "#f8fafc", borderRadius: "10px", padding: "4px", border: "1.5px solid #e5e7eb" }}>

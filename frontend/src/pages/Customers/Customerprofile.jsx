@@ -4,6 +4,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useEffect } from "react";
 import { useContext } from "react";
 import { PageTitleContext } from "../../layout/MainLayout"; 
+import toast from "react-hot-toast";
 
 
 const indianStates = [
@@ -481,14 +482,15 @@ const handleSave = async (updated) => {
       setCustomer(updated);
       setMode("profile");
 
-      alert("✅ Customer updated successfully");
+      toast.success("Customer updated successfully!");
+      navigate("/customer-list");
 
     } else {
-      alert("❌ Failed to update customer");
+      toast.error("Failed to update customer. Please try again.");
     }
   } catch (err) {
     console.error("Save error:", err);
-    alert("❌ Something went wrong");
+    toast.error("❌ Something went wrong");
   }
 };
 

@@ -31,7 +31,7 @@ function createWindow() {
     win.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
   }
 
-  // win.webContents.openDevTools(); 
+  win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -841,11 +841,11 @@ ipcMain.handle("delete-invoice", async (event, id) => {
   }
 });
 
-ipcMain.handle("mark-invoice-paid", async (event, id) => {
+ipcMain.handle("mark-invoice-paid", async (event, payload) => {
   try {
     db.prepare(`
-      UPDATE invoices SET status = 'Paid' WHERE id = ?
-    `).run(id);
+      UPDATE invoices SET status = ? WHERE id = ?
+    `).run(payload.status, payload.id);
 
     return { success: true };
   } catch (err) {
@@ -1132,7 +1132,7 @@ ipcMain.handle("delivery-challan:create", async (event, data) => {
 
     const result = stmt.run(
       data.invoice_id,
-      data.finalChallanNo,
+      finalChallanNo,
       data.challanDate,
       data.againstInvoiceNo,
       data.transportMode,
