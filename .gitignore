@@ -11,7 +11,7 @@ build/
 .env.development
 .env.test
 .env.production
-gls.db
+frontend/gls.db
 
 # logs
 logs

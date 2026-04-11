@@ -63,7 +63,7 @@ const MainLayout = () => {
     setDynamicTitle(null);
   }, [location.pathname]);
 
-  const userName = user?.name || user?.email?.split("@")[0] || "User";
+  const userName = profile?.customer_name || profile?.email?.split("@")[0] || "User";
   const companyName = profile?.business_name || "";
   const staticHeader = getHeader(location.pathname, userName, companyName);
 const { title, subtitle } =
@@ -141,13 +141,13 @@ const { title, subtitle } =
 
             <div onClick={() => navigate("/profile")} className="flex items-center gap-3 cursor-pointer group">
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm bg-[#1e3a8a]">
-                {user?.email?.charAt(0)?.toUpperCase() || "U"}
+                {profile?.customer_name?.charAt(0)?.toUpperCase() || "U"}
               </div>
               <div className="flex flex-col">
                 <p className="text-sm font-semibold text-gray-800 leading-tight">
-                  {user?.email?.split("@")[0] || "User"}
+                  {profile?.customer_name || "User"}
                 </p>
-                <p className="text-xs text-gray-400">{user?.email || "user@email.com"}</p>
+                <p className="text-xs text-gray-400">{profile?.email || "user@email.com"}</p>
               </div>
               <ChevronDown size={16} className="text-gray-400 group-hover:text-gray-600 transition" />
             </div>

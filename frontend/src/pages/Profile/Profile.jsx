@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import {  useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const indianStates = [
@@ -144,6 +145,7 @@ export default function Profile() {
   const [toast, setToast] = useState(false);
   const [activeTab, setActiveTab] = useState("business");
 const [headerImage, setHeaderImage] = useState(null);
+const navigate = useNavigate();
 
 const handleHeaderUpload = (e) => {
   const file = e.target.files[0];
@@ -231,6 +233,7 @@ const handleHeaderUpload = (e) => {
     });
 
     if (res.success) {
+      navigate(0);
       setToast(true);
       setTimeout(() => setSaved(false), 3000);
     }
@@ -364,7 +367,7 @@ const handleHeaderUpload = (e) => {
                 <CharBoxInput length={10} value={profile.phone} onChange={val => update("phone", val)} numeric />
               </Field>
               <Field label="Email Address" >
-                <TextInput type="email" value={profile.email} onChange={e => update("email", e.target.value)}  />
+                <TextInput type="email" readOnly={true} value={profile.email} onChange={e => update("email", e.target.value)}  />
               </Field>
               <Field label="Website">
                 <TextInput value={profile.website} onChange={e => update("website", e.target.value)}  />

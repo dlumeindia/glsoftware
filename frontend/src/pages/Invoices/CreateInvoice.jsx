@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import CustomerModal from "../../components/CustomerModal";
+import {  useNavigate } from "react-router-dom";
 
 
 const indiancustomer_states = [
@@ -244,6 +245,7 @@ const AddressForm = ({ form, update, title, customerType, fieldRules }) => (
 );
 
 export default function CreateInvoice() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState();
   const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
@@ -416,7 +418,7 @@ export default function CreateInvoice() {
       if (res?.success) {
         toast.success(`✅ Invoice Saved (ID: ${res.data.invoice_no})`);
 
-        navigate("/invoice-list");
+        navigate("/invoices");
 
         // Optional: Reset form
         resetForm();

@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS users (
 `).run();
 
 db.prepare(`
+  INSERT OR IGNORE INTO users (name, email, password)
+  VALUES (?, ?, ?)
+`).run("Vinod", "vinod@dlume.com", "123456");
+
+db.prepare(`
   CREATE TABLE IF NOT EXISTS business_profile (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,

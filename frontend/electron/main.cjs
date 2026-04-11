@@ -5,6 +5,7 @@ const { shell } = require("electron");
 const db = require("./database/db.cjs");
 const isDev = !app.isPackaged;
 const os = require("os");
+const bcrypt = require("bcrypt");
 
 const safe = (val) => {
   if (val === undefined || val === null) return "";
@@ -36,41 +37,48 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
+
 ipcMain.handle("signup-user", async (event, user) => {
-
-
   try {
+    const hashedPassword = await bcrypt.hash(user.password, 10); // 10 = salt rounds
 
     const stmt = db.prepare(
       "INSERT INTO users (name,email,password) VALUES (?,?,?)"
     );
 
-    stmt.run(user.name, user.email, user.password);
+    stmt.run(user.name, user.email, hashedPassword);
 
     return { success: true };
 
   } catch (error) {
-
     console.error(error);
 
     return {
       success: false,
       message: error.message
     };
-
   }
-
 });
 
 ipcMain.handle("login-user", async (event, user) => {
   try {
+    
     const stmt = db.prepare(
-      "SELECT * FROM users WHERE email = ? AND password = ?"
+      "SELECT * FROM users WHERE email = ?"
     );
 
-    const foundUser = stmt.get(user.email, user.password);
+    const foundUser = stmt.get(user.email);
 
     if (!foundUser) {
+      return {
+        success: false,
+        message: "Invalid email or password",
+      };
+    }
+
+    const isMatch = await bcrypt.compare(user.password, foundUser.password);
+
+    if (!isMatch) {
       return {
         success: false,
         message: "Invalid email or password",
