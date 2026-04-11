@@ -15,7 +15,7 @@ const MetaRow = ({ label, value }) => (
   <div style={{ display: "grid", gridTemplateColumns: "130px 10px 1fr", alignItems: "start", marginBottom: "4px", fontSize: "12.5px" }}>
     <span style={{ color: "#4b5563", fontWeight: 600 }}>{label}</span>
     <span style={{ fontWeight: 700 }}>:</span>
-    <span style={{ color: "#111827", fontWeight: 700 }}>{value || "—"}</span>
+    <span style={{ color: "#111827", fontWeight: 700 }}>{value || " "}</span>
   </div>
 );
 
@@ -301,8 +301,18 @@ export default function DeliveryChallan() {
               <MetaRow label="Challan No." value={challan.challan_no} />
               <MetaRow label="Challan Date" value={formatDate(challan.challan_date)} />
               <MetaRow label="Against Invoice" value={challan.against_invoice_no} />
-              <MetaRow label="Invoice Date" value={formatDate(invoice.invoice_date)} />
-              <MetaRow label="Place of Supply" value={`${challan.place_of_supply} (${challan.place_of_supply_code})`} />
+              <MetaRow label="Invoice Date" value={formatDate(invoice.invoice_date)} /> <MetaRow
+                    label="Place of Supply"
+                    value={
+                      invoice?.ship_state
+                        ? `${invoice.ship_state}${
+                            invoice?.ship_state_code ? ` (${invoice.ship_state_code})` : ""
+                          }`
+                        : `${invoice?.bill_state}${
+                            invoice?.bill_state_code ? ` (${invoice.bill_state_code})` : ""
+                          }`
+                    }
+                  />
               <MetaRow label="Transport Mode" value={challan.transport_mode} />
               <MetaRow label="Vehicle No." value={challan.vehicle_no} />
             </div>

@@ -264,7 +264,7 @@ export default function CreateInvoice() {
   const [transporterDocNo, setTransporterDocNo] = useState("");
   const [vehicleNo, setVehicleNo] = useState("");
   const [from, setFrom] = useState("");
-  const [deliveryMode, setDeliveryMode] = useState("1");
+  const [deliveryMode, setDeliveryMode] = useState("Road");
   const [approximateDistance, setApproximateDistance] = useState("");
   const [customerModal, setCustomerModal] = useState(false);
   // const [customers] =useState([
@@ -415,6 +415,8 @@ export default function CreateInvoice() {
 
       if (res?.success) {
         toast.success(`✅ Invoice Saved (ID: ${res.data.invoice_no})`);
+
+        navigate("/invoice-list");
 
         // Optional: Reset form
         resetForm();

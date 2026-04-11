@@ -257,7 +257,7 @@ function EditInvoiceForm({ invoice, profile, items, onSave, onCancel }) {
   const [vehicleNo, setVehicleNo] = useState(invoice?.vehicle_no || "");
   const [from, setFrom] = useState(invoice?.from || "");
   const [deliveryMode, setDeliveryMode] = useState(
-    invoice?.delivery_mode || "1",
+    invoice?.delivery_mode || "Road",
   );
 
   const [billForm, setBillForm] = useState({ ...emptyAddress, ...billAddress });
