@@ -44,7 +44,9 @@ const columns = [
   {
     key: "status",
     label: "Status",
-    render: (value) => (
+    align: "center",
+   render: (value) => (
+    <div style={{ display: "flex", justifyContent: "center" }}>
       <span
         className={`px-3 py-1 rounded-full text-xs font-medium ${
           value === "Paid"
@@ -54,7 +56,8 @@ const columns = [
       >
         {value}
       </span>
-    ),
+    </div>
+  ),
   },
 ];
 const Dashboard = () => {

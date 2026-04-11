@@ -215,6 +215,10 @@ function MarkAsPaidButton({ invoice, onToggleStatus }) {
 
 
 const Invoices = () => {
+  const formatDate = (d) => {
+    if (!d) return " ";
+    return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  };
 
   const [fromDate, setFromDate] = useState("");
 const [toDate, setToDate] = useState("");
@@ -301,11 +305,10 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
         const formatted = res.data.map((inv) => ({
           id: inv.id,
           number: inv.invoice_no,
-          date: inv.invoice_date,
+          date: inv?.invoice_date ? formatDate(inv.invoice_date) : "",
           company: inv.bill_company_name,
           customer: inv.customer_name,
           amount: `₹ ${Number(inv.grand_total).toLocaleString("en-IN")}`,
-          dueDate: inv.invoice_date,
           status: inv.status,
           ewayBill: inv.eway_enabled,  
           vehicle_no: inv.vehicle_no,  
@@ -360,7 +363,7 @@ const columns = [
 const filteredInvoices = invoices.filter((inv) => {
   if (!fromDate && !toDate) return true;
 
-  const invoiceDate = new Date(inv.dueDate);
+  const invoiceDate = new Date(inv.invoice_date);
 
   if (fromDate && new Date(fromDate) > invoiceDate) return false;
   if (toDate && new Date(toDate) < invoiceDate) return false;

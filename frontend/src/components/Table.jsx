@@ -39,7 +39,13 @@ const Table = ({
         <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
           <tr>
             {columns.map((col) => (
-              <th key={col.key} className="text-left px-1 py-2">
+              <th key={col.key} className='px-1 py-2 ${
+                    col.align === "center"
+                      ? "text-center"
+                      : col.align === "right"
+                      ? "text-right"
+                      : "text-left"
+                  }'>
                 {col.label}
               </th>
             ))}
