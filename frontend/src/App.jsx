@@ -13,7 +13,14 @@ function App() {
         </AuthProvider>
       </HashRouter >
 
-      <Toaster position="top-right" />
+      <Toaster
+          position="top-center"
+          containerStyle={{
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
     </>
   );
 }
