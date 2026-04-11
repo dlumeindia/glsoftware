@@ -193,10 +193,10 @@ export default function DeliveryChallan() {
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "13px", fontWeight: 700, color: "#374151", cursor: "pointer" }}>
               <FiPrinter size={15} /> Print
             </button>
-            <button type="button" onClick={handleShare}
+            {/* <button type="button" onClick={handleShare}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13px", fontWeight: 700, color: "#fff", cursor: "pointer" }}>
               <FiShare2 size={15} /> Share
-            </button>
+            </button> */}
           </div>
         </div>
 

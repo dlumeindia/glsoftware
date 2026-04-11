@@ -39,12 +39,12 @@ const Table = ({
         <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
           <tr>
             {columns.map((col) => (
-              <th key={col.key} className="text-left px-6 py-3">
+              <th key={col.key} className="text-left px-1 py-2">
                 {col.label}
               </th>
             ))}
             {(renderActions || onDelete) && (
-              <th className="text-left px-6 py-3">Actions</th>
+              <th className="text-left px-1 py-2">Actions</th>
             )}
           </tr>
         </thead>
@@ -58,7 +58,7 @@ const Table = ({
                 className="border-t border-gray-100 hover:bg-gray-50 transition cursor-pointer"
               >
                 {columns.map((col) => (
-                  <td key={col.key} className="px-6 py-4 text-gray-700">
+                  <td key={col.key} className="px-2 py-2 text-gray-700">
                     {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}

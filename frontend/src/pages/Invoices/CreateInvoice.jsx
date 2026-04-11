@@ -59,6 +59,7 @@ const InvoiceTypeOptions = ["Tax Invoice", "Debit Note", "Credit Note"];
 
 const numberToWords = (num) => {
   if (num === 0) return "Zero";
+  if (!num || num < 0) return "Zero";
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
   const convert = (n) => {
@@ -418,7 +419,6 @@ export default function CreateInvoice() {
       if (res?.success) {
         toast.success(`✅ Invoice Saved (ID: ${res.data.invoice_no})`);
 
-        navigate("/invoices");
 
         // Optional: Reset form
         resetForm();
@@ -770,7 +770,7 @@ export default function CreateInvoice() {
         {ewayEnabled && (
           <div style={{ padding: "20px" }}>
             <div style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "14px" }}>E-Way Bill Info</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "20px" }}>
+            {/* <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "20px" }}>
               <Field label="Document Type" required>
                 <SelectInput value={docType} onChange={(e) => setDocType(e.target.value)} placeholder="Select"
                   options={[{ value: "Tax Invoice", label: "Tax Invoice" }, { value: "Bill of Supply", label: "Bill of Supply" }, { value: "Bill of Entry", label: "Bill of Entry" }, { value: "Delivery Challan", label: "Delivery Challan" }, { value: "Others", label: "Others" }]}
@@ -779,7 +779,7 @@ export default function CreateInvoice() {
               <Field label="Approximate Distance (KM)" required>
                 <TextInput type="number" value={approximateDistance} onChange={(e) => setApproximateDistance(e.target.value)} placeholder="e.g. 150" />
               </Field>
-            </div>
+            </div> */}
             <div style={{ height: "1px", background: "#f0f4f8", margin: "0 0 20px 0" }} />
             <div style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "14px" }}>Transporter Details</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "20px" }}>
@@ -801,9 +801,9 @@ export default function CreateInvoice() {
               <Field label="Vehicle No">
                 <TextInput value={vehicleNo} onChange={(e) => setVehicleNo(e.target.value)} placeholder="MH04AB1234" />
               </Field>
-              <Field label="From">
+              {/* <Field label="From">
                 <TextInput value={from} onChange={(e) => setFrom(e.target.value)} placeholder="City / Place of dispatch" />
-              </Field>
+              </Field> */}
             </div>
           </div>
         )}
@@ -855,11 +855,33 @@ export default function CreateInvoice() {
                     } style={{ ...tableInputStyle, textAlign: "center" }} />
                   </td>
                   <td style={{ padding: "5px 6px", width: "100px" }}>
-                    <input type="number" value={item.rate} onChange={(e) =>
+                    <input type="number" value={item.rate} 
+                    onFocus={(e) => {
+                        if (item.rate === 0) {
+                          updateItem(i, "rate", "");
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === "") {
+                          updateItem(i, "rate", 0); // restore 0 if left empty
+                        }
+                      }}
+                      onChange={(e) =>
                       updateItem(i, "rate", e.target.value === "" ? "" : Number(e.target.value))
                     } style={{ ...tableInputStyle, textAlign: "right" }} />                  </td>
                   <td style={{ padding: "5px 6px", width: "65px" }}>
-                    <input type="number" value={item.discount} min={0} max={100} onChange={(e) =>
+                    <input type="number" value={item.discount} min={0} 
+                      onFocus={(e) => {
+                        if (item.discount === 0) {
+                          updateItem(i, "discount", "");
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === "") {
+                          updateItem(i, "discount", 0); // restore 0 if left empty
+                        }
+                      }}
+                      onChange={(e) =>
                       updateItem(i, "discount", e.target.value === "" ? "" : Number(e.target.value))
                     } style={{ ...tableInputStyle, textAlign: "center" }} />
                   </td>
@@ -984,7 +1006,7 @@ export default function CreateInvoice() {
 
       {/* Footer Actions */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingBottom: "40px" }}>
-        <button style={{ padding: "11px 28px", border: "1.5px solid #d1d5db", borderRadius: "8px", background: "#fff", fontSize: "13.5px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Cancel</button>
+        <button onClick={() => navigate("/invoices")} style={{ padding: "11px 28px", border: "1.5px solid #d1d5db", borderRadius: "8px", background: "#fff", fontSize: "13.5px", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Cancel</button>
         <button onClick={handleSaveInvoice} style={{ padding: "11px 28px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13.5px", fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.3px" }}>💾 Save Invoice</button>
       </div>
 

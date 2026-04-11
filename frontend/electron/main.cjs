@@ -647,9 +647,7 @@ ipcMain.handle("update-invoice", async (event, data) => {
       customerID,
     } = data;
 
-    console.log(billForm);
-    console.log(shipForm);
-
+   
     const safe = (val) => val ?? "";
 
     // ==========================
@@ -874,7 +872,6 @@ ipcMain.handle("mark-invoice-paid", async (event, payload) => {
 
 ipcMain.handle("save-eway", async (event, { id, data }) => {
   try {
-    console.log(data);
     db.prepare(`
       UPDATE invoices
       SET eway_bill_no = ?, vehicle_no = ?, transporter_name = ?, 

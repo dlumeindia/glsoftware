@@ -32,6 +32,7 @@ const units = ["NOS", "PCS", "KG", "MTR", "LTR", "SET", "BOX", "ROLL", "PAIR"];
 
 const numberToWords = (num) => {
   if (!num || isNaN(num)) return "Zero";
+  if (!num || num < 0) return "Zero";
 
   num = Math.floor(num);
 
@@ -164,7 +165,7 @@ const EOtpInput = ({ value, onChange, length, numbersOnly = false }) => (
 const AddressBlock = ({ form, update, title, grid3 }) => (    <div>
       <div style={{ fontSize: "13px", fontWeight: 700, color: "#1e3a5f", marginBottom: "14px", paddingBottom: "8px", borderBottom: "1.5px solid #f0f4f8" }}>{title}</div>
       <div style={grid3}>
-        <EField label="Company / Name" required><ETextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)} placeholder="Company Name" /></EField>
+        <EField label="Company  Name" readOnly><ETextInput value={form.company_name} onChange={(e) => update("company_name", e.target.value)} readOnly placeholder="Company Name" /></EField>
         <EField label="Email"><ETextInput type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="billing@company.com" /></EField>
         <EField label="Mobile Number"><EOtpInput value={form.phone || ""} onChange={(v) => update("phone", v)} length={10} numbersOnly /></EField>
         <EField label="GSTIN"><EOtpInput value={form.gstin || ""} onChange={(v) => update("gstin", v)} length={15} /></EField>
@@ -1127,6 +1128,16 @@ const isInter =
                       onChange={(e) =>
                         updateItem(i, "rate", Number(e.target.value))
                       }
+                      onFocus={(e) => {
+                        if (item.rate === 0) {
+                          updateItem(i, "rate", "");
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === "") {
+                          updateItem(i, "rate", 0); // restore 0 if left empty
+                        }
+                      }}
                       style={{
                         ...editInputStyle,
                         padding: "6px 8px",
@@ -1140,10 +1151,19 @@ const isInter =
                       type="number"
                       value={item.discount}
                       min={0}
-                      max={100}
                       onChange={(e) =>
                         updateItem(i, "discount", Number(e.target.value))
                       }
+                       onFocus={(e) => {
+                        if (item.discount === 0) {
+                          updateItem(i, "discount", "");
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === "") {
+                          updateItem(i, "discount", 0); // restore 0 if left empty
+                        }
+                      }}
                       style={{
                         ...editInputStyle,
                         padding: "6px 8px",
@@ -1861,7 +1881,7 @@ export default function InvoiceDetail() {
             <head>
               <style>
                 body { margin:0; font-family: Arial; }
-                @page { size: A4; margin: 10mm; }
+                @page { size: A4; margin: 7mm; }
               </style>
             </head>
             <body>
@@ -1969,10 +1989,10 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "13px", fontWeight: 700, color: "#374151", cursor: "pointer" }}>
               <FiPrinter size={15} /> Print
             </button>
-            <button type="button" onClick={handleShare}
+            {/* <button type="button" onClick={handleShare}
               style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", border: "none", borderRadius: "8px", background: "#1e3a5f", fontSize: "13px", fontWeight: 700, color: "#fff", cursor: "pointer" }}>
               <FiShare2 size={15} /> Share
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -2020,7 +2040,7 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
           </div>
 
           {/* ── INVOICE TITLE BAR ── */}
-          <div style={{ background: "#f8fafc", borderBottom: "1.5px solid #e5e7eb", padding: "9px 28px", textAlign: "center" }}>
+          <div style={{ background: "#f8fafc", borderBottom: "1.5px solid #e5e7eb", padding: "7px 18px", textAlign: "center" }}>
             <span style={{ fontSize: "15px", fontWeight: 800, color: "#111827", letterSpacing: "1px", textTransform: "uppercase" }}>
               {invoice?.invoice_type || "Tax Invoice"}
             </span>
@@ -2163,7 +2183,7 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
 
           {/* ── BANK + SUMMARY ── */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", borderTop: "1.5px solid #d1d5db" }}>
-            <div style={{ padding: "18px 24px", borderRight: "1.5px solid #d1d5db" }}>
+            <div style={{ padding: "8px 12px", borderRight: "1.5px solid #d1d5db" }}>
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "10px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Bank Details
               </div>
@@ -2182,7 +2202,7 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
                 ))}
               </div>
             </div>
-            <div style={{ padding: "18px 20px" }}>
+            <div style={{ padding: "8px 12px" }}>
               <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "10px", paddingBottom: "5px", borderBottom: "1.5px solid #e5e7eb" }}>
                 Summary
               </div>
@@ -2289,21 +2309,21 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
           <div style={{ borderTop: "1.5px solid #e5e7eb", padding: "12px 24px", background: "#f8fafc" }}>
             <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#374151" }}>Amount in Words: </span>
             <span style={{ fontSize: "12.5px", color: "#111827", fontStyle: "italic" }}>
-              {numberToWords(grandTotal)} Rupees Only
+              {numberToWords(invoice?.grand_total)} Rupees Only
             </span>
           </div>
 
           {/* ── TERMS + SIGNATURE ── */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", borderTop: "1.5px solid #d1d5db" }}>
-            <div style={{ padding: "16px 24px", borderRight: "1.5px solid #d1d5db" }}>
-              <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>
+            <div style={{ padding: "8px 13px", borderRight: "1.5px solid #d1d5db" }}>
+              <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
                 Terms & Conditions
               </div>
               <div style={{ fontSize: "12px", color: "#4b5563", lineHeight: "1.8", whiteSpace: "pre-line" }}>
                {profile?.terms || "1. Payment due within 30 days.\n2. Goods once sold will not be taken back.\n3. Subject to Navi Mumbai Jurisdiction."}
               </div>
             </div>
-            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ padding: "8px 13px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontSize: "11px", fontWeight: 800, color: "#374151", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
                   For {profile?.business_name}

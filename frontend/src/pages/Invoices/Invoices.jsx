@@ -276,6 +276,7 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
     });
 
     if (res.success) {
+      loadInvoices();
       setInvoices((prev) =>
         prev.map((inv) =>
           inv.id === invoiceId ? { ...inv, ewayBill: ewayData } : inv
@@ -300,6 +301,7 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
         const formatted = res.data.map((inv) => ({
           id: inv.id,
           number: inv.invoice_no,
+          date: inv.invoice_date,
           company: inv.bill_company_name,
           customer: inv.customer_name,
           amount: `₹ ${Number(inv.grand_total).toLocaleString("en-IN")}`,
@@ -327,6 +329,7 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
   };
 const columns = [
   { key: "number", label: "Invoice #" },
+  { key: "date", label: "Invoice Date" },
 
   { key: "company", label: "Company" },   // ✅ NEW
   { key: "customer", label: "Customer" }, // ✅ NEW
