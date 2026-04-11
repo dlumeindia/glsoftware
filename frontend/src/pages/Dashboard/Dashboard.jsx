@@ -5,6 +5,7 @@ import Table from "../../components/Table";
 import {
   HiOutlineDocumentText,
   HiOutlineCurrencyDollar,
+   HiOutlineCurrencyRupee,
 } from "react-icons/hi";
 
 const columns = [
@@ -93,20 +94,20 @@ const Dashboard = () => {
   iconBg="bg-blue-100"
   iconColor="text-blue-600"
 />
-        <StatCard
-          title="Total Paid"
-          value={`₹${Number(stats.totalPaid).toFixed(2)}`}
-          icon={HiOutlineCurrencyDollar}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <StatCard
-          title="Total Unpaid"
-          value={`₹${Number(stats.totalUnpaid).toFixed(2)}`}
-          icon={HiOutlineCurrencyDollar}
-          iconBg="bg-red-100"
-          iconColor="text-red-600"
-        />
+      <StatCard
+  title="Total Paid"
+  value={`₹${Number(stats.totalPaid).toFixed(2)}`}
+  icon={HiOutlineCurrencyRupee}
+  iconBg="bg-green-100"
+  iconColor="text-green-600"
+/>
+<StatCard
+  title="Total Unpaid"
+  value={`₹${Number(stats.totalUnpaid).toFixed(2)}`}
+  icon={HiOutlineCurrencyRupee}
+  iconBg="bg-red-100"
+  iconColor="text-red-600"
+/>
       </div>
 
       {/* Recent Invoices */}
