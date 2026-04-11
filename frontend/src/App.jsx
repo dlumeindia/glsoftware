@@ -10,17 +10,17 @@ function App() {
       <HashRouter >
         <AuthProvider>
           <AppRoutes />
+         <Toaster
+            position="top-center"
+            containerStyle={{
+              top: "50%",
+              transform: "translateY(-50%)",
+            }}
+          />
         </AuthProvider>
       </HashRouter >
 
-      <Toaster
-          position="top-center"
-          containerStyle={{
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        />
+      
     </>
   );
 }

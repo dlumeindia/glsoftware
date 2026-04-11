@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { FiPlus, FiX, FiCheckCircle, FiTruck } from "react-icons/fi";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import Table from "../../components/Table";
 import Button from "../../components/Button";
 import ConfirmBox from "../../components/ConfirmBox";
@@ -412,6 +413,7 @@ const filteredInvoices = invoices.filter((inv) => {
             });
 
             if (res.success) {
+               toast.success("Invoice status updated successfully");
               setInvoices((prev) =>
                           prev.map((inv) =>
                             inv.id === selectedId

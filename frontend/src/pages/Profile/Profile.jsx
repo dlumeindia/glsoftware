@@ -142,7 +142,6 @@ const SavedBadge = ({ show }) =>
 export default function Profile() {
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
-  const [toast, setToast] = useState(false);
   const [activeTab, setActiveTab] = useState("business");
 const [headerImage, setHeaderImage] = useState(null);
 const navigate = useNavigate();
@@ -233,9 +232,14 @@ const handleHeaderUpload = (e) => {
     });
 
     if (res.success) {
-      navigate(0);
-      setToast(true);
-      setTimeout(() => setSaved(false), 3000);
+        toast.loading("Saving...");
+
+        setTimeout(() => {
+          toast.success("Profile Saved successfully");
+          navigate(0);
+        }, 1000);
+
+        setTimeout(() => setSaved(false), 3000);
     }
 
   };
@@ -252,33 +256,11 @@ const handleHeaderUpload = (e) => {
 
   }, []);
 
-  const Toast = ({ show, message }) => {
-    if (!show) return null;
 
-    return (
-      <div style={{
-        position: "fixed",
-        top: "20px",
-        right: "20px",
-        background: "#1e3a5f",
-        color: "#fff",
-        padding: "12px 18px",
-        borderRadius: "8px",
-        fontSize: "13px",
-        fontWeight: 600,
-        boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-        zIndex: 9999,
-        animation: "fadeIn 0.3s ease"
-      }}>
-        ✅ {message}
-      </div>
-    );
-  };
 
   return (
     <div style={{ width: "100%", margin: "0", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
-    <Toast show={toast} message="Profile saved successfully!" />
 
       {/* Company Banner */}
       <div style={{ background: "#1e3a5f", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", color: "#fff" }}>
