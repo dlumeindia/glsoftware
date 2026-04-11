@@ -87,7 +87,7 @@ const MetaRow = ({ label, value }) => (
   <div style={{ display: "grid", gridTemplateColumns: "130px 10px 1fr", alignItems: "start", marginBottom: "4px", fontSize: "12.5px" }}>
     <span style={{ color: "#4b5563", fontWeight: 600 }}>{label}</span>
     <span style={{ fontWeight: 700 }}>:</span>
-    <span style={{ color: "#111827", fontWeight: 700 }}>{value || "—"}</span>
+    <span style={{ color: "#111827", fontWeight: 700 }}>{value || " "}</span>
   </div>
 );
 
