@@ -180,8 +180,8 @@ export default function DeliveryChallan() {
               <FiArrowLeft size={15} /> Back
             </button>
             <div>
-              <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Challan {challan.challanNo}</h1>
-              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(challan.challanDate)} · {customer.company_name}</p>
+              <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Challan {challan.challan_no}</h1>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>{formatDate(challan.challan_date)} · {customer.company_name}</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>

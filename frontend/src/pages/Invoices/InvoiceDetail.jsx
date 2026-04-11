@@ -907,11 +907,11 @@ const isInter =
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
                   options={[
-                    { value: "INV", label: "Tax Invoice" },
-                    { value: "BIL", label: "Bill of Supply" },
-                    { value: "BOE", label: "Bill of Entry" },
-                    { value: "CHL", label: "Delivery Challan" },
-                    { value: "OTH", label: "Others" },
+                    { value: "Tax Invoice", label: "Tax Invoice" },
+                    { value: "Bill of Supply", label: "Bill of Supply" },
+                    { value: "Bill of Entry", label: "Bill of Entry" },
+                    { value: "Delivery Challan", label: "Delivery Challan" },
+                    { value: "Others", label: "Others" },
                   ]}
                 />
               </EField>
@@ -984,10 +984,10 @@ const isInter =
                   value={deliveryMode}
                   onChange={(e) => setDeliveryMode(e.target.value)}
                   options={[
-                    { value: "1", label: "Road" },
-                    { value: "2", label: "Rail" },
-                    { value: "3", label: "Air" },
-                    { value: "4", label: "Ship" },
+                    { value: "Road", label: "Road" },
+                    { value: "Rail", label: "Rail" },
+                    { value: "Air", label: "Air" },
+                    { value: "Ship", label: "Ship" },
                   ]}
                 />
               </EField>
@@ -1961,11 +1961,11 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
             </button>
             <div>
               <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#0b1324" }}>Invoice {invoice?.invoiceNo}</h1>
-<p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>
-  {invoice?.invoiceDate ? formatDate(invoice.invoiceDate) : ""}
-  {invoice?.invoiceDate && customer?.company_name ? " · " : ""}
-  {customer?.company_name || ""}
-</p>
+                    <p style={{ margin: 0, fontSize: "12.5px", color: "#6b7280", marginTop: "2px" }}>
+                      {invoice?.invoice_date ? formatDate(invoice.invoice_date) : ""}
+                      {invoice?.invoice_date && customer?.company_name ? " · " : ""}
+                      {customer?.company_name || ""}
+                    </p>
             </div>
             <StatusBadge status={invoice?.status} />
           </div>

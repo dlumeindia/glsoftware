@@ -51,9 +51,10 @@ const Err = ({ field, errors }) =>
 
 // ─── E-Way Bill Modal ────────────────────────────────────────────────────────
 function EWayBillModal({ invoice, onClose, onGenerate }) {
+  console.log(invoice);
   const [form, setForm] = useState({
-    ewayBillNo: "", ewayBillDate: "", ewayValidUpto: "",
-    transportMode: "Road", vehicleNo: "", transporterName: "",
+    ewayBillNo: `${invoice.eway_bill_no ?? ''}`, ewayBillDate: `${invoice.eway_bill_date ?? ''}`, ewayValidUpto: `${invoice.eway_valid_upto ?? ''}`,
+    transportMode: `${invoice.transport_mode ?? 'Road'}`, vehicleNo: `${invoice.vehicle_no ?? ''}`, transporterName: `${invoice.transporter_name ?? ''}`,
   });
   const [errors, setErrors] = useState({});
 
@@ -186,6 +187,7 @@ function MarkAsPaidButton({ invoice, onToggleStatus }) {
       onClick={(e) => {
         e.stopPropagation();
         onToggleStatus(invoice.id, isPaid);
+        
       }}
       style={{
         display: "flex",
@@ -217,7 +219,9 @@ const Invoices = () => {
 const [toDate, setToDate] = useState("");
 
  const [confirmOpen, setConfirmOpen] = useState(false);
+ const [confirmsOpen, setConfirmsOpen] = useState(false);
 const [selectedId, setSelectedId] = useState(null);
+const [actionType, setActionType] = useState("");
 
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
@@ -235,28 +239,33 @@ const [selectedId, setSelectedId] = useState(null);
   }
 };
 
-const handleToggleStatus = async (invoiceId, isPaid) => {
-  const invoice = invoices.find((inv) => inv.id === invoiceId);
 
-  const confirmMsg = isPaid
-    ? `Mark Invoice #${invoice?.number} as Unpaid?`
-    : `Mark Invoice #${invoice?.number} as Paid?`;
+
+const handleToggleStatus = async (invoiceId, isPaid) => {
+  setSelectedId(invoiceId);
+  setActionType(isPaid); // "paid" or "unpaid"
+  setConfirmsOpen(true);
+  // const invoice = invoices.find((inv) => inv.id === invoiceId);
+
+  // const confirmMsg = isPaid
+  //   ? `Mark Invoice #${invoice?.number} as Unpaid?`
+  //   : `Mark Invoice #${invoice?.number} as Paid?`;
  
 
-  const res = await window.electronAPI.markInvoicePaid({
-    id: invoiceId,
-    status: isPaid ? "Unpaid" : "Paid",
-  });
+  // const res = await window.electronAPI.markInvoicePaid({
+  //   id: invoiceId,
+  //   status: isPaid ? "Unpaid" : "Paid",
+  // });
 
-  if (res.success) {
-    setInvoices((prev) =>
-      prev.map((inv) =>
-        inv.id === invoiceId
-          ? { ...inv, status: isPaid ? "Unpaid" : "Paid" }
-          : inv
-      )
-    );
-  }
+  // if (res.success) {
+  //   setInvoices((prev) =>
+  //     prev.map((inv) =>
+  //       inv.id === invoiceId
+  //         ? { ...inv, status: isPaid ? "Unpaid" : "Paid" }
+  //         : inv
+  //     )
+  //   );
+  // }
 };
 
   const handleGenerateEway = async (invoiceId, ewayData) => {
@@ -290,12 +299,23 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
         const formatted = res.data.map((inv) => ({
           id: inv.id,
           number: inv.invoice_no,
-         company: inv.bill_company_name,
-customer: inv.customer_name,
+          company: inv.bill_company_name,
+          customer: inv.customer_name,
           amount: `₹ ${Number(inv.grand_total).toLocaleString("en-IN")}`,
           dueDate: inv.invoice_date,
-          status: inv.status, // you can add DB field later
-          ewayBill: inv.eway_enabled,   // same here
+          status: inv.status,
+          ewayBill: inv.eway_enabled,  
+          vehicle_no: inv.vehicle_no,  
+          transporter_name: inv.transporter_name,  
+          doc_type: inv.doc_type,  
+          distance: inv.distance,  
+          transporter_doc: inv.transporter_doc,  
+          transport_mode: inv.transport_mode,  
+          from_place: inv.from_place,  
+          eway_bill_no: inv.eway_bill_no,  
+          eway_bill_date: inv.eway_bill_date,  
+          eway_valid_upto: inv.eway_valid_upto,  
+          generated_at: inv.generated_at,  
         }));
 
         setInvoices(formatted);
@@ -347,28 +367,61 @@ const filteredInvoices = invoices.filter((inv) => {
   return (
     <div className="space-y-6">
         <ConfirmBox
-  open={confirmOpen}
-  title="Delete Customer"
-  message="Are you sure you want to delete this customer?"
-  onCancel={() => setConfirmOpen(false)}
-  onConfirm={async () => {
-    setConfirmOpen(false);
+          open={confirmOpen}
+          title="Delete Customer"
+          message="Are you sure you want to delete this customer?"
+          confirmText="Delete"
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={async () => {
+            setConfirmOpen(false);
 
-    try {
-        const res = await window.electronAPI.deleteInvoice(selectedId);
+            try {
+                const res = await window.electronAPI.deleteInvoice(selectedId);
 
-     
-      if (res.success) {
-        setInvoices((prev) => prev.filter((i) => i.id !== selectedId));
-        toast.success("Invoice deleted successfully");
-      } else {
-        toast.error("Failed to delete Invoice");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    }
-  }}
-/>
+            
+              if (res.success) {
+                setInvoices((prev) => prev.filter((i) => i.id !== selectedId));
+                toast.success("Invoice deleted successfully");
+              } else {
+                toast.error("Failed to delete Invoice");
+              }
+            } catch {
+              toast.error("Something went wrong");
+            }
+          }}
+        />
+         <ConfirmBox
+          open={confirmsOpen}
+          title={`Mark as ${actionType ?  "Unpaid" : "Paid"}`}
+          message={`Are you sure you want to mark this invoice as ${
+            actionType ? "Unpaid" : "Paid"
+          }?`}
+          onCancel={() => setConfirmsOpen(false)}
+          onConfirm={async () => {
+            setConfirmsOpen(false);
+
+            const invoice = invoices.find((inv) => inv.id === selectedId);
+
+            const isPaid = invoice.status;
+          
+          
+
+            const res = await window.electronAPI.markInvoicePaid({
+              id: selectedId,
+              status: actionType ? "Unpaid" : "Paid",
+            });
+
+            if (res.success) {
+              setInvoices((prev) =>
+                          prev.map((inv) =>
+                            inv.id === selectedId
+                              ? { ...inv, status: actionType ? "Unpaid" : "Paid" }
+                              : inv
+                          )
+                        );
+                      }
+          }}
+        />
     <div className="flex items-center justify-between">
   <Button variant="navy" size="md" className="flex items-center gap-2" onClick={() => navigate("/create-invoice")}>
     <FiPlus size={16} /> Create Invoice
@@ -408,7 +461,7 @@ const filteredInvoices = invoices.filter((inv) => {
 </div>
       <Table
         columns={columns}
-     data={filteredInvoices}
+        data={filteredInvoices}
         searchPlaceholder="Search invoices..."
         onRowClick={(row) => navigate(`/invoice/${row.id}`)}
         onDelete={(row) => {

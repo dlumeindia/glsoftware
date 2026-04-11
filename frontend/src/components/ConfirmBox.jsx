@@ -1,9 +1,9 @@
-import React from "react";
 
 export default function ConfirmBox({
   open,
   title = "Are you sure?",
   message = "This action cannot be undone.",
+  confirmText = "Confirm",
   onConfirm,
   onCancel,
 }) {
@@ -23,7 +23,7 @@ export default function ConfirmBox({
           </button>
 
           <button onClick={onConfirm} style={deleteBtn}>
-            Delete
+            {confirmText} 
           </button>
         </div>
       </div>

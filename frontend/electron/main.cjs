@@ -782,6 +782,17 @@ ipcMain.handle("get-invoices", async () => {
           c.customer_name as customer_name,
           i.grand_total,
           i.eway_enabled,
+          i.vehicle_no,
+          i.transporter_name,
+          i.doc_type,
+          i.distance,
+          i.transporter_doc,
+          i.transport_mode,
+          i.from_place,
+          i.eway_bill_no,
+          i.eway_bill_date,
+          i.eway_valid_upto,
+          i.generated_at,
           i.status
         FROM invoices i
         LEFT JOIN customers c ON i.customer_id = c.id

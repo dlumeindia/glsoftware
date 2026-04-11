@@ -769,7 +769,7 @@ export default function CreateInvoice() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "20px" }}>
               <Field label="Document Type" required>
                 <SelectInput value={docType} onChange={(e) => setDocType(e.target.value)} placeholder="Select"
-                  options={[{ value: "INV", label: "Tax Invoice" }, { value: "BIL", label: "Bill of Supply" }, { value: "BOE", label: "Bill of Entry" }, { value: "CHL", label: "Delivery Challan" }, { value: "OTH", label: "Others" }]}
+                  options={[{ value: "Tax Invoice", label: "Tax Invoice" }, { value: "Bill of Supply", label: "Bill of Supply" }, { value: "Bill of Entry", label: "Bill of Entry" }, { value: "Delivery Challan", label: "Delivery Challan" }, { value: "Others", label: "Others" }]}
                 />
               </Field>
               <Field label="Approximate Distance (KM)" required>
@@ -791,7 +791,7 @@ export default function CreateInvoice() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
               <Field label="Mode of Transport" required>
                 <SelectInput value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value)} placeholder="Select Mode"
-                  options={[{ value: "1", label: "Road" }, { value: "2", label: "Rail" }, { value: "3", label: "Air" }, { value: "4", label: "Ship" }]}
+                  options={[{ value: "Road", label: "Road" }, { value: "Rail", label: "Rail" }, { value: "Air", label: "Air" }, { value: "Ship", label: "Ship" }]}
                 />
               </Field>
               <Field label="Vehicle No">
