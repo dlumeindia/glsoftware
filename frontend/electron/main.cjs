@@ -1040,7 +1040,7 @@ ipcMain.handle("print-pdf", async (event, html) => {
     const path = require("path");
     const { app } = require("electron");
 
-    const filePath = path.join(app.getPath("temp"), "challan-print.pdf");
+    const filePath = path.join(app.getPath("temp"), "print.pdf");
 
     fs.writeFileSync(filePath, pdfBuffer);
 
