@@ -62,7 +62,7 @@ const numberToWords = (num) => {
 };
 
 const formatDate = (d) => {
-  if (!d) return "—";
+  if (!d) return " ";
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
