@@ -630,7 +630,7 @@ const isInter =
             <ETextInput
               value={invoiceNo}
               onChange={(e) => setInvoiceNo(e.target.value)}
-              placeholder="INV-2526-001"
+              
             />
           </EField>
           <EField label="Invoice Date" required>
@@ -759,7 +759,7 @@ const isInter =
                     onChange={(e) =>
                       updateShipForm("company_name", e.target.value)
                     }
-                    placeholder="Company Name"
+                   
                   />
                 </EField>
                 <EField label="Address Line 1">
@@ -768,7 +768,6 @@ const isInter =
                     onChange={(e) =>
                       updateShipForm("address_line1", e.target.value)
                     }
-                    placeholder="Building, Street"
                   />
                 </EField>
                 <EField label="Address Line 2">
@@ -777,14 +776,12 @@ const isInter =
                     onChange={(e) =>
                       updateShipForm("address_line2", e.target.value)
                     }
-                    placeholder="Landmark"
                   />
                 </EField>
                 <EField label="City">
                   <ETextInput
                     value={shipForm.city}
                     onChange={(e) => updateShipForm("city", e.target.value)}
-                    placeholder="Mumbai"
                   />
                 </EField>
                 <EField label="State">
@@ -803,14 +800,12 @@ const isInter =
                     value={shipForm.state_code}
                     readOnly
                     onChange={() => {}}
-                    placeholder="27"
                   />
                 </EField>
                 <EField label="Pincode">
                   <ETextInput
                     value={shipForm.pincode}
                     onChange={(e) => updateShipForm("pincode", e.target.value)}
-                    placeholder="400001"
                   />
                 </EField>
               </div>
@@ -920,7 +915,6 @@ const isInter =
                   type="number"
                   value={approximateDistance}
                   onChange={(e) => setApproximateDistance(e.target.value)}
-                  placeholder="e.g. 150"
                 />
               </EField>
             </div>
@@ -948,14 +942,12 @@ const isInter =
                 <ETextInput
                   value={transporterName}
                   onChange={(e) => setTransporterName(e.target.value)}
-                  placeholder="Transporter name"
                 />
               </EField>
               <EField label="Transporter Doc No">
                 <ETextInput
                   value={transporterDocNo}
                   onChange={(e) => setTransporterDocNo(e.target.value)}
-                  placeholder="LR / RR / Airway Bill No."
                 />
               </EField>
             </div>
@@ -995,14 +987,12 @@ const isInter =
                 <ETextInput
                   value={vehicleNo}
                   onChange={(e) => setVehicleNo(e.target.value)}
-                  placeholder="MH04AB1234"
                 />
               </EField>
               <EField label="From">
                 <ETextInput
                   value={from}
                   onChange={(e) => setFrom(e.target.value)}
-                  placeholder="City / Place of dispatch"
                 />
               </EField>
             </div>
@@ -1081,7 +1071,6 @@ const isInter =
                       onChange={(e) =>
                         updateItem(i, "description", e.target.value)
                       }
-                      placeholder="Item description"
                       style={{
                         ...editInputStyle,
                         padding: "6px 9px",
@@ -1093,7 +1082,6 @@ const isInter =
                     <input
                       value={item.hsn}
                       onChange={(e) => updateItem(i, "hsn", e.target.value)}
-                      placeholder="HSN"
                       style={{
                         ...editInputStyle,
                         padding: "6px 9px",
@@ -1667,7 +1655,6 @@ const isInter =
           value={termsAndConditions}
           onChange={(e) => setTermsAndConditions(e.target.value)}
           rows={4}
-          placeholder="Enter terms and conditions..."
           style={{
             ...editInputStyle,
             resize: "vertical",
