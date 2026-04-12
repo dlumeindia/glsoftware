@@ -114,10 +114,10 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Invoices */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-gray overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 ">
           <h2 className="text-lg font-semibold text-gray-800">
             Recent Invoices
           </h2>

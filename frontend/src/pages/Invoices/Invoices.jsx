@@ -215,9 +215,21 @@ function MarkAsPaidButton({ invoice, onToggleStatus }) {
 
 
 const Invoices = () => {
+  // const formatDate = (d) => {
+  //   if (!d) return " ";
+  //   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  // };
+
   const formatDate = (d) => {
-    if (!d) return " ";
-    return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    if (!d) return "";
+
+    const date = new Date(d);
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
   };
 
   const [fromDate, setFromDate] = useState("");
@@ -332,7 +344,18 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
     }
   };
 
-  const filteredByDate = invoices.filter((item) => {
+  const filteredInvoices = invoices.filter((inv) => {
+    if (!fromDate && !toDate) return true;
+
+    const invoiceDate = new Date(inv.invoice_date);
+
+    if (fromDate && new Date(fromDate) > invoiceDate) return false;
+    if (toDate && new Date(toDate) < invoiceDate) return false;
+
+    return true;
+  });
+
+  const filteredByDate = filteredInvoices.filter((item) => {
     if (!item.rawDate) return true;
 
     const itemDate = new Date(item.rawDate);
@@ -377,16 +400,7 @@ const columns = [
 ];
 
 
-const filteredInvoices = invoices.filter((inv) => {
-  if (!fromDate && !toDate) return true;
 
-  const invoiceDate = new Date(inv.invoice_date);
-
-  if (fromDate && new Date(fromDate) > invoiceDate) return false;
-  if (toDate && new Date(toDate) < invoiceDate) return false;
-
-  return true;
-});
 
   return (
     <div className="space-y-6">

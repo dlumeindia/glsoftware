@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 db.prepare(`
   INSERT OR IGNORE INTO users (name, email, password)
   VALUES (?, ?, ?)
-`).run("Vinod", "vinod@dlume.com", "123456");
+`).run("GLS Sky", "sky@glsprecious.in", "Admin@gls");
 
 db.prepare(`
   CREATE TABLE IF NOT EXISTS business_profile (
