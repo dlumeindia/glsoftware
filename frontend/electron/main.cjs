@@ -1107,7 +1107,7 @@ ipcMain.handle("dashboard:get-recent-invoices", async () => {
       FROM invoices i
       LEFT JOIN customers c ON i.customer_id = c.id
       ORDER BY i.id DESC
-      LIMIT 5
+      LIMIT 10
     `)
     .all();
 

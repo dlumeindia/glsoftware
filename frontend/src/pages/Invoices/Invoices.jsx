@@ -305,6 +305,7 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
         const formatted = res.data.map((inv) => ({
           id: inv.id,
           number: inv.invoice_no,
+          rawDate: inv.invoice_date,
           date: inv?.invoice_date ? formatDate(inv.invoice_date) : "",
           company: inv.bill_company_name,
           customer: inv.customer_name,
@@ -330,6 +331,19 @@ const handleToggleStatus = async (invoiceId, isPaid) => {
       console.error("❌ Load Invoice Error:", err);
     }
   };
+
+  const filteredByDate = invoices.filter((item) => {
+    if (!item.rawDate) return true;
+
+    const itemDate = new Date(item.rawDate);
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    if (from && itemDate < from) return false;
+    if (to && itemDate > to) return false;
+
+    return true;
+  });
 const columns = [
   { key: "number", label: "Invoice #" },
   { key: "date", label: "Invoice Date" },
@@ -342,11 +356,14 @@ const columns = [
   {
     key: "status",
     label: "Status",
+    align: "center",
     render: (_, row) => (
-   <MarkAsPaidButton
-  invoice={row}
-  onToggleStatus={handleToggleStatus}
-/>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <MarkAsPaidButton
+        invoice={row}
+        onToggleStatus={handleToggleStatus}
+      />
+      </div>
     ),
   },
 
@@ -446,7 +463,7 @@ const filteredInvoices = invoices.filter((inv) => {
     flexWrap: "wrap",
   }}>
     <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em", color: "#6b7280", textTransform: "uppercase" }}>
-      Date range
+      Select Date 
     </span>
     <div style={{ width: "1px", height: "18px", background: "#e5e7eb" }} />
     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -469,7 +486,7 @@ const filteredInvoices = invoices.filter((inv) => {
 </div>
       <Table
         columns={columns}
-        data={filteredInvoices}
+        data={filteredByDate}
         searchPlaceholder="Search invoices..."
         onRowClick={(row) => navigate(`/invoice/${row.id}`)}
         onDelete={(row) => {
