@@ -1,6 +1,8 @@
 const Database = require("better-sqlite3");
+const bcrypt = require("bcrypt");
 
 const db = new Database("gls.db");
+const hashedPassword = bcrypt.hashSync('Admin@gls', 10); 
 
 // Create users table
 db.prepare(`
@@ -15,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 db.prepare(`
   INSERT OR IGNORE INTO users (name, email, password)
   VALUES (?, ?, ?)
-`).run("GLS Sky", "sky@glsprecious.in", "Admin@gls");
+`).run("GLS Sky", "sky@glsprecious.in", hashedPassword);
 
 db.prepare(`
   CREATE TABLE IF NOT EXISTS business_profile (

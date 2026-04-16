@@ -215,22 +215,22 @@ function MarkAsPaidButton({ invoice, onToggleStatus }) {
 
 
 const Invoices = () => {
-  // const formatDate = (d) => {
-  //   if (!d) return " ";
-  //   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  // };
-
   const formatDate = (d) => {
-    if (!d) return "";
-
-    const date = new Date(d);
-
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-
-    return `${day}/${month}/${year}`;
+    if (!d) return " ";
+    return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   };
+
+  // const formatDate = (d) => {
+  //   if (!d) return "";
+
+  //   const date = new Date(d);
+
+  //   const day = String(date.getDate()).padStart(2, "0");
+  //   const month = String(date.getMonth() + 1).padStart(2, "0");
+  //   const year = date.getFullYear();
+
+  //   return `${day}/${month}/${year}`;
+  // };
 
   const [fromDate, setFromDate] = useState("");
 const [toDate, setToDate] = useState("");
