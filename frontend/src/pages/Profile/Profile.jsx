@@ -370,34 +370,35 @@ const handleHeaderUpload = (e) => {
   flexWrap: "wrap"
 }}>
 
-  {/* Preview */}
-  <div style={{
-    width: "120px",
-    height: "70px",
-    borderRadius: "8px",
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden"
-  }}>
-    {headerImage ? (
-      <img
-        src={headerImage}
-        alt="Header"
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain"
-        }}
-      />
-    ) : (
-      <span style={{ fontSize: "11px", color: "#9ca3af" }}>
-        No Header
-      </span>
-    )}
-  </div>
+{/* Preview */}
+<div style={{
+  width: "260px",
+  height: "140px",
+  borderRadius: "10px",
+  background: "#fff",
+  border: "1px solid #e5e7eb",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  padding: "8px"
+}}>
+  {headerImage ? (
+    <img
+      src={headerImage}
+      alt="Header"
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "contain"
+      }}
+    />
+  ) : (
+    <span style={{ fontSize: "12px", color: "#9ca3af" }}>
+      No Header
+    </span>
+  )}
+</div>
 
   {/* Upload Info */}
   <div style={{ flex: 1 }}>

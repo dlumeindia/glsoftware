@@ -2019,12 +2019,12 @@ const isInter = invoice?.ship_state_code !== profile?.state_code;
                   <img
                     src={profile?.header_image}
                     alt="Logo"
-                    style={{
-                      width: "60px",
-                      height: "auto",
-                      maxHeight: "60px",
-                      objectFit: "contain"
-                    }}
+                  style={{
+  width: "120px",       
+  height: "auto",
+  maxHeight: "100px",   
+  objectFit: "contain"
+}}
                   />              <div>
                   <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
                   <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
