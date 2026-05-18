@@ -28,11 +28,12 @@ function createWindow() {
 
  if (isDev) {
     win.loadURL("http://localhost:5173");
+    // win.webContents.openDevTools(); 
+
   } else {
     win.loadFile(path.join(app.getAppPath(), "dist", "index.html"));
   }
 
-  win.webContents.openDevTools(); 
 }
 
 app.whenReady().then(createWindow);
@@ -501,11 +502,11 @@ ipcMain.handle("save-invoice", async (event, data) => {
           round_off, grand_total,
           eway_enabled, doc_type, distance,
            transporter_name, transporter_doc,
-          vehicle_no, transport_mode, from_place, customer_id
+          vehicle_no, transport_mode, from_place, customer_id, status
           
         )
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
-                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       `);
 
       const result = stmt.run(
@@ -550,7 +551,7 @@ ipcMain.handle("save-invoice", async (event, data) => {
         safe(roundOff),
         safe(grandTotal),
 
-         ewayEnabled ? 1 : 0,
+          0,
         safe(docType),
         safe(approximateDistance),
          safe(transporterName),
@@ -558,7 +559,8 @@ ipcMain.handle("save-invoice", async (event, data) => {
         safe(vehicleNo),
         safe(deliveryMode),
         safe(from),
-        safe(customerID)
+        safe(customerID),
+        'Unpaid'
         
       );
 

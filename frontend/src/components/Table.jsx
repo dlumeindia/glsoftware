@@ -35,7 +35,7 @@ const Table = ({
       </div>
 
       {/* Table */}
-      <table className="w-full text-sm">
+      <table className="w-full text-sm m-3">
         <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
           <tr>
             {columns.map((col) => (
