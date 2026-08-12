@@ -54,7 +54,7 @@ const businessInfo = {
   accountHolder: "GLS TECHNOLOGIST",
 };
 
-const gstOptions = [0, 5, 12, 18, 28];
+const gstOptions = [0,3, 5, 12, 18, 28];
 const InvoiceTypeOptions = ["Tax Invoice", "Debit Note", "Credit Note"];
 
 const numberToWords = (num) => {
@@ -553,7 +553,7 @@ export default function CreateInvoice() {
     return acc;
   }, {});
 
-  const units = ["NOS", "PCS", "KG", "MTR", "LTR", "SET", "BOX", "ROLL", "PAIR"];
+  const units = ["NOS","GRAM", "PCS", "KG", "MTR", "LTR", "SET", "BOX", "ROLL", "PAIR"];
 
   return (
     <div style={{ width: "100%", margin: "0" }}>
