@@ -15,11 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
 `).run();
 
 db.prepare(`
-  INSERT OR IGNORE INTO users (name, email, password)
-  VALUES (?, ?, ?)
-`).run("GLS Sky", "sky@glsprecious.in", hashedPassword);
-
-db.prepare(`
   CREATE TABLE IF NOT EXISTS business_profile (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
@@ -55,6 +50,36 @@ db.prepare(`
 
   FOREIGN KEY (user_id) REFERENCES users(id)
 )`).run();
+
+
+
+
+const insertUserAndCustomer = db.transaction((name, email, password) => {
+  const result = db.prepare(`
+    INSERT OR IGNORE INTO users (name, email, password)
+    VALUES (?, ?, ?)
+  `).run(name, email, password);
+
+  let userId;
+
+  if (result.changes === 0) {
+    const existingUser = db
+      .prepare(`SELECT id FROM users WHERE email = ?`)
+      .get(email);
+
+    userId = existingUser.id;
+  } else {
+    userId = result.lastInsertRowid;
+  }
+
+  db.prepare(`
+    INSERT OR IGNORE INTO business_profile (customer_name, email, user_id, terms)
+    VALUES (?, ?, ?, ?)
+  `).run(name, email, userId, 'Payment due within 30 days of invoice date.\nGoods once sold will not be taken back.\nSubject to Navi Mumbai jurisdiction.');
+});
+
+insertUserAndCustomer("GLS Sky", "sky@glsprecious.in", hashedPassword);
+
 
 db.prepare(`
  CREATE TABLE IF NOT EXISTS customers (
@@ -150,7 +175,7 @@ db.prepare(`
       eway_valid_upto DATETIME, 
       generated_at DaTETIME,
       customer_id INTEGER,  
-      challan_id INTEGER,
+      challan INTEGER,
 
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )

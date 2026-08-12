@@ -374,6 +374,43 @@ export default function CreateInvoice() {
     }
   };
 
+  const validateInvoice = ({ selectedCustomer, business_name, bill_state, items }) => {
+    console.log(selectedCustomer);
+    if (!selectedCustomer) {
+      return "Please select a customer";
+    }
+
+    if (!business_name || business_name.trim() === "") {
+      return "Business name is required";
+    }
+
+    if (!bill_state) {
+      return "Please select bill state";
+    }
+
+    if (!items || items.length === 0) {
+      return "At least one item is required";
+    }
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      if (!item.description || item.description <= 0) {
+        return `Item ${i + 1}: Discription is required`;
+      }
+
+      if (!item.qty || item.qty <= 0) {
+        return `Item ${i + 1}: Quantity is required`;
+      }
+
+      if (!item.rate || item.rate <= 0) {
+        return `Item ${i + 1}: Rate is required`;
+      }
+    }
+
+    return null;
+  };
+
   const handleSaveInvoice = async () => {
     try {
       const data = {
@@ -410,6 +447,21 @@ export default function CreateInvoice() {
         from,
         customerID,
       };
+
+      const business_name = billForm.company_name;
+      const bill_state = billForm.customer_state;
+
+      const error = validateInvoice({
+          selectedCustomer,
+          business_name,
+          bill_state,
+          items,
+        });
+
+        if (error) {
+          toast.error(error);
+          return;
+        }
 
 
       console.log("📤 Sending to backend:", data);
@@ -565,7 +617,7 @@ export default function CreateInvoice() {
           <div>
             <div style={{ fontSize: "18px", fontWeight: 800, letterSpacing: "0.5px", marginBottom: "4px" }}>{profile?.business_name}</div>
             <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.address_line1}, {profile?.address_line2}, {profile?.city} - {profile?.pincode}</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>customer state Code : {profile?.state_code}</div>
+            <div style={{ fontSize: "12px", opacity: 0.8, maxWidth: "420px", lineHeight: "1.5" }}>{profile?.state ?? ''} : {profile?.state_code}</div>
             <div style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>{profile?.email} · {profile?.phone}</div>
           </div>
           <div style={{ textAlign: "right" }}>

@@ -78,19 +78,21 @@ const SelectInput = ({ value, onChange, options, placeholder }) => (
   </select>
 );
 
-const CharBoxInput = ({ length, value = "", onChange, numeric }) => {
+
+const CharBoxInput = ({ length, value, onChange, numeric }) => {
+  const safeValue = value || "";
   const refs = useRef([]);
   const handleChange = (e, index) => {
     let val = e.target.value;
     val = numeric
       ? val.replace(/[^0-9]/g, "")
       : val.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const newVal = value.substring(0, index) + val + value.substring(index + 1);
+    const newVal = safeValue.substring(0, index) + val + safeValue.substring(index + 1);
     onChange(newVal);
     if (val && refs.current[index + 1]) refs.current[index + 1].focus();
   };
   const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !value[index] && refs.current[index - 1]) refs.current[index - 1].focus();
+    if (e.key === "Backspace" && !safeValue[index] && refs.current[index - 1]) refs.current[index - 1].focus();
     if (e.key === "ArrowLeft" && refs.current[index - 1]) { e.preventDefault(); refs.current[index - 1].focus(); }
     if (e.key === "ArrowRight" && refs.current[index + 1]) { e.preventDefault(); refs.current[index + 1].focus(); }
   };
@@ -101,7 +103,7 @@ const CharBoxInput = ({ length, value = "", onChange, numeric }) => {
           key={i}
           ref={el => refs.current[i] = el}
           maxLength={1}
-          value={value[i] || ""}
+          value={safeValue[i] || ""}
           onChange={e => handleChange(e, i)}
           onKeyDown={e => handleKeyDown(e, i)}
           style={{
